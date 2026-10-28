@@ -1,4 +1,3 @@
-```html
 <!doctype html>
 <html lang="en">
 <head>
@@ -59,7 +58,7 @@ input,select{background:#0b0e17;border:1px solid var(--line);color:var(--txt);pa
 .lane small{position:absolute;bottom:6px;font-size:12px;color:var(--mut);font-weight:700}
 .lane.pass{background:#12402a}.lane.cur{border-color:var(--gold)}.lane.dead{background:#4a1a1a}
 table{width:100%;border-collapse:collapse}
-th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line)}
+th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);vertical-align:middle}
 td input{width:110px}
 #auth{position:fixed;inset:0;background:#06080fee;display:flex;align-items:center;justify-content:center;z-index:20}
 #auth .card{width:340px}
@@ -124,6 +123,16 @@ td input{width:110px}
 .hl-stat strong{font-size:21px;color:var(--gold);overflow-wrap:anywhere}
 #hlstatus{border:1px solid var(--line);background:#0d1220;border-radius:10px;padding:14px;text-align:center;margin-top:14px}
 #hlbet{width:150px}
+
+/* Admin account management */
+.admin-info{color:var(--mut);margin:6px 0 16px}
+.admin-table-wrap{width:100%;overflow-x:auto}
+#utable input{min-width:100px;max-width:180px;width:100%}
+.admin-actions{display:flex;gap:6px;flex-wrap:wrap}
+.admin-actions .btn{padding:8px 12px;font-size:13px}
+.admin-actions .delete-btn{color:var(--r);border-color:#6d3038}
+.admin-user{font-weight:700}
+.admin-badge{color:var(--gold);font-size:12px}
 @media(max-width:650px){
   header{padding:12px}
   nav{padding:12px 12px 0}
@@ -140,6 +149,8 @@ td input{width:110px}
   .hl-stat{padding:10px 5px}
   .hl-stat strong{font-size:17px}
   .hl-buttons .btn{padding:11px 13px}
+  #utable th,#utable td{padding:8px}
+  .admin-actions .btn{padding:8px 10px}
 }
 </style>
 </head>
@@ -268,10 +279,26 @@ td input{width:110px}
     <p class="case-note">Aces are high, twos are low, and equal ranks lose. Your round and multiplier are stored on the server.</p>
   </section>
 
+  <!-- Admin account management -->
   <section id="admin" class="card hide">
-    <h3 style="margin-top:0">Admin · Manage balances</h3>
-    <table><thead><tr><th>User</th><th>Balance</th><th>Amount</th><th></th></tr></thead><tbody id="utable"></tbody></table>
+    <h3 style="margin-top:0">🛠 Admin · Manage Accounts</h3>
+    <p class="admin-info">Rename accounts, adjust virtual balances, or permanently delete non-admin accounts.</p>
+    <div class="admin-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>User</th>
+            <th>Rename</th>
+            <th>Balance</th>
+            <th>Amount</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="utable"></tbody>
+      </table>
+    </div>
   </section>
+
   <div class="foot">Virtual currency with no cash value. For entertainment only.</div>
 </main>
 <div id="toast"></div>
@@ -882,24 +909,170 @@ function resume(g){
   }
 }
 
-// Admin
+// Admin account management
 async function loadUsers(){
-  const u=await api('admin/users');
-  if(!u)return;
-  $('#utable').innerHTML=u.map(x=>
-    `<tr><td>${x.username}${x.is_admin?' ★':''}</td><td>${fmt(x.balance)}</td><td><input type="number" id="a${x.id}" placeholder="amount"></td><td><button class="btn" onclick="adj(${x.id},'add')">Add</button> <button class="btn ghost" onclick="adj(${x.id},'set')">Set</button></td></tr>`
-  ).join('');
+  const users=await api('admin/users');
+  if(!users)return;
+
+  const tbody=$('#utable');
+  tbody.replaceChildren();
+
+  for(const user of users){
+    const tr=document.createElement('tr');
+
+    // Username and admin indicator
+    const nameCell=document.createElement('td');
+    const name=document.createElement('span');
+    name.className='admin-user';
+    name.textContent=user.username;
+    nameCell.appendChild(name);
+
+    if(user.is_admin){
+      const badge=document.createElement('span');
+      badge.className='admin-badge';
+      badge.textContent=' ★ ADMIN';
+      nameCell.appendChild(badge);
+    }
+
+    // Rename input
+    const renameCell=document.createElement('td');
+    const renameInput=document.createElement('input');
+    renameInput.type='text';
+    renameInput.id='rename'+user.id;
+    renameInput.value=user.username;
+    renameInput.maxLength=16;
+    renameInput.autocomplete='off';
+    renameInput.setAttribute('aria-label','New username for '+user.username);
+    renameInput.addEventListener('keydown',event=>{
+      if(event.key==='Enter')renameUser(user.id);
+    });
+    renameCell.appendChild(renameInput);
+
+    // Balance
+    const balanceCell=document.createElement('td');
+    balanceCell.textContent=fmt(user.balance);
+
+    // Balance amount input
+    const amountCell=document.createElement('td');
+    const amountInput=document.createElement('input');
+    amountInput.type='number';
+    amountInput.id='a'+user.id;
+    amountInput.step='1';
+    amountInput.placeholder='Amount';
+    amountInput.setAttribute('aria-label','Balance adjustment for '+user.username);
+    amountCell.appendChild(amountInput);
+
+    // Actions
+    const actionsCell=document.createElement('td');
+    const actions=document.createElement('div');
+    actions.className='admin-actions';
+
+    const renameButton=document.createElement('button');
+    renameButton.className='btn';
+    renameButton.textContent='Rename';
+    renameButton.onclick=()=>renameUser(user.id);
+
+    const addButton=document.createElement('button');
+    addButton.className='btn';
+    addButton.textContent='Add';
+    addButton.onclick=()=>adj(user.id,'add');
+
+    const setButton=document.createElement('button');
+    setButton.className='btn ghost';
+    setButton.textContent='Set';
+    setButton.onclick=()=>adj(user.id,'set');
+
+    actions.append(renameButton,addButton,setButton);
+
+    // Never offer deletion of administrator accounts in the UI.
+    if(!user.is_admin){
+      const deleteButton=document.createElement('button');
+      deleteButton.className='btn ghost delete-btn';
+      deleteButton.textContent='Delete';
+      deleteButton.onclick=()=>deleteUser(user.id,user.username);
+      actions.appendChild(deleteButton);
+    }
+
+    actionsCell.appendChild(actions);
+    tr.append(nameCell,renameCell,balanceCell,amountCell,actionsCell);
+    tbody.appendChild(tr);
+  }
 }
 
-async function adj(id,m){
-  const v=document.getElementById('a'+id).value;
-  if(v==='')return toast('Enter an amount (negative removes)');
-  const d=await api('admin/balance',{id,amount:parseInt(v),mode:m});
-  if(d){
-    toast('Balance updated');
-    loadUsers();
-    const me2=await api('me');
-    if(me2)setBal(me2.balance);
+async function renameUser(id){
+  const input=document.getElementById('rename'+id);
+  const username=input?.value.trim();
+
+  if(!username||!/^[a-zA-Z0-9_]{3,16}$/.test(username)){
+    toast('Username must be 3–16 letters, numbers, or underscores');
+    return;
+  }
+
+  if(!confirm(`Rename this account to "${username}"?`))return;
+
+  const result=await api('admin/rename',{id,username});
+  if(!result)return;
+
+  toast('Username updated');
+  await loadUsers();
+
+  // Refresh the current user's displayed username and balance.
+  const current=await api('me');
+  if(current){
+    me=current;
+    $('#who').textContent=current.username+(current.isAdmin?' · admin':'');
+    setBal(current.balance);
+  }
+}
+
+async function deleteUser(id,username){
+  const confirmed=confirm(
+    `Permanently delete "${username}" and its account data? This cannot be undone.`
+  );
+  if(!confirmed)return;
+
+  const result=await api('admin/delete-user',{id});
+  if(!result)return;
+
+  toast('Account deleted');
+  await loadUsers();
+
+  // Refresh the logged-in user's data after the deletion.
+  const current=await api('me');
+  if(current){
+    me=current;
+    $('#who').textContent=current.username+(current.isAdmin?' · admin':'');
+    setBal(current.balance);
+  }
+}
+
+async function adj(id,mode){
+  const input=document.getElementById('a'+id);
+  const raw=input?.value.trim();
+
+  if(raw===''){
+    toast('Enter an amount');
+    return;
+  }
+
+  const amount=Number(raw);
+
+  if(!Number.isSafeInteger(amount)||Math.abs(amount)>1e12){
+    toast('Enter a valid whole-number amount');
+    return;
+  }
+
+  const result=await api('admin/balance',{id,amount,mode});
+  if(!result)return;
+
+  toast('Balance updated');
+  await loadUsers();
+
+  const current=await api('me');
+  if(current){
+    me=current;
+    setBal(current.balance);
+    $('#who').textContent=current.username+(current.isAdmin?' · admin':'');
   }
 }
 
@@ -907,4 +1080,3 @@ init();
 </script>
 </body>
 </html>
-```

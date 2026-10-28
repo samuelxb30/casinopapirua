@@ -1,4 +1,3 @@
-
 const express = require('express');
 const { Pool } = require('pg');
 const crypto = require('crypto');
@@ -153,9 +152,7 @@ async function initDatabase() {
 
   await pool.query(`
     CREATE INDEX IF NOT EXISTS game_history_user_id_idx ON game_history(user_id)
-  `).catch(() => {
-    // game_history is optional if the starter schema differs.
-  });
+  `).catch(() => {});
 
   await pool.query(`
     CREATE INDEX IF NOT EXISTS trades_user_id_created_idx
@@ -441,29 +438,164 @@ app.get('/api/admin/users', auth, admin, route(async (req, res) => {
   })));
 }));
 
+// Rename a user's username.
+app.post('/api/admin/rename', auth, admin, route(async (req, res) => {
+  const { id, username } = req.body || {};
+
+  if (!/^[1-9]\d{0,18}$/.test(String(id ?? ''))) {
+    return fail(res, 'Invalid account ID');
+  }
+
+  if (
+    typeof username !== 'string' ||
+    !/^[a-zA-Z0-9_]{3,16}$/.test(username)
+  ) {
+    return fail(res, 'Username: 3-16 letters, numbers or _');
+  }
+
+  await transaction(async client => {
+    const targetResult = await client.query(
+      'SELECT id FROM users WHERE id=$1 FOR UPDATE',
+      [String(id)]
+    );
+
+    if (!targetResult.rows.length) {
+      const err = new Error('User not found');
+      err.status = 404;
+      throw err;
+    }
+
+    const duplicate = await client.query(
+      `SELECT 1 FROM users
+       WHERE LOWER(username)=LOWER($1) AND id<>$2`,
+      [username, String(id)]
+    );
+
+    if (duplicate.rows.length) {
+      const err = new Error('Username already taken');
+      err.status = 409;
+      throw err;
+    }
+
+    await client.query(
+      'UPDATE users SET username=$1 WHERE id=$2',
+      [username, String(id)]
+    );
+  });
+
+  res.json({ success: true, username });
+}));
+
+// Permanently delete a non-admin account and its related records.
+app.post('/api/admin/delete-user', auth, admin, route(async (req, res) => {
+  const { id } = req.body || {};
+
+  if (!/^[1-9]\d{0,18}$/.test(String(id ?? ''))) {
+    return fail(res, 'Invalid account ID');
+  }
+
+  if (String(id) === String(req.user.id)) {
+    return fail(res, 'You cannot delete your own account');
+  }
+
+  await transaction(async client => {
+    const targetResult = await client.query(
+      `SELECT id, username, is_admin
+       FROM users
+       WHERE id=$1
+       FOR UPDATE`,
+      [String(id)]
+    );
+
+    const target = targetResult.rows[0];
+
+    if (!target) {
+      const err = new Error('User not found');
+      err.status = 404;
+      throw err;
+    }
+
+    if (target.is_admin) {
+      const err = new Error('Admin accounts cannot be deleted');
+      err.status = 403;
+      throw err;
+    }
+
+    await client.query(
+      'DELETE FROM sessions WHERE user_id=$1',
+      [target.id]
+    );
+
+    await client.query(
+      'DELETE FROM games WHERE user_id=$1',
+      [target.id]
+    );
+
+    await client.query(
+      'DELETE FROM holdings WHERE user_id=$1',
+      [target.id]
+    );
+
+    await client.query(
+      'DELETE FROM auto_orders WHERE user_id=$1',
+      [target.id]
+    );
+
+    await client.query(
+      'DELETE FROM trades WHERE user_id=$1',
+      [target.id]
+    );
+
+    const historyTable = await client.query(
+      `SELECT to_regclass('public.game_history') AS table_name`
+    );
+
+    if (historyTable.rows[0].table_name) {
+      await client.query(
+        'DELETE FROM public.game_history WHERE user_id=$1',
+        [target.id]
+      );
+    }
+
+    await client.query(
+      'DELETE FROM users WHERE id=$1',
+      [target.id]
+    );
+  });
+
+  res.json({ success: true });
+}));
+
 app.post('/api/admin/balance', auth, admin, route(async (req, res) => {
   const { id, amount, mode } = req.body || {};
   const n = Number(amount);
 
+  if (!/^[1-9]\d{0,18}$/.test(String(id ?? '')))
+    return fail(res, 'Invalid account ID');
+
   if (!Number.isSafeInteger(n) || Math.abs(n) > 1e12)
     return fail(res, 'Invalid amount');
 
-  const exists = await pool.query('SELECT 1 FROM users WHERE id=$1', [id]);
-  if (!exists.rows.length) return fail(res, 'User not found');
+  const exists = await pool.query(
+    'SELECT 1 FROM users WHERE id=$1',
+    [String(id)]
+  );
+
+  if (!exists.rows.length) return fail(res, 'User not found', 404);
 
   if (mode === 'set') {
     await pool.query(
       'UPDATE users SET balance=$1 WHERE id=$2',
-      [Math.max(0, n), id]
+      [Math.max(0, n), String(id)]
     );
   } else {
     await pool.query(
       'UPDATE users SET balance=GREATEST(0,balance+$1) WHERE id=$2',
-      [n, id]
+      [n, String(id)]
     );
   }
 
-  res.json({ balance: await getBal(id) });
+  res.json({ balance: await getBal(String(id)) });
 }));
 
 // ---------- Mines ----------
@@ -641,7 +773,7 @@ app.post('/api/chicken/cashout', auth, route(async (req, res) => {
   res.json({ payout, mult, balance: await getBal(req.user.id) });
 }));
 
-/* ---------- Themed Boxes ---------- */
+// ---------- Themed Boxes ----------
 
 const CASE_REWARDS = {
   csstyle: [
@@ -747,7 +879,7 @@ app.post('/api/boxes/open', auth, route(async (req, res) => {
   });
 }));
 
-/* ---------- Higher or Lower ---------- */
+// ---------- Higher or Lower ----------
 
 const HL_MAX_MULTIPLIER = 1000;
 
@@ -790,7 +922,6 @@ function hlSafePayout(bet, multiplier) {
   );
 }
 
-// Start a round: deduct the bet and save the first card.
 app.post('/api/higherlower/start', auth, route(async (req, res) => {
   const bet = Number(req.body.bet);
 
@@ -856,7 +987,6 @@ app.post('/api/higherlower/start', auth, route(async (req, res) => {
   });
 }));
 
-// Resolve a guess using the server-side saved card.
 app.post('/api/higherlower/guess', auth, route(async (req, res) => {
   const uid = req.user.id;
   const guess = req.body.guess;
@@ -945,7 +1075,6 @@ app.post('/api/higherlower/guess', auth, route(async (req, res) => {
   });
 }));
 
-// Cash out using the multiplier stored in PostgreSQL.
 app.post('/api/higherlower/cashout', auth, route(async (req, res) => {
   const uid = req.user.id;
 
