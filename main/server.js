@@ -17,7 +17,7 @@ const RED = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
 
 const app = express();
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
 const fail = (res, msg, code = 400) => res.status(code).json({ error: msg });
 const getBal = id => db.prepare('SELECT balance FROM users WHERE id=?').get(id).balance;
