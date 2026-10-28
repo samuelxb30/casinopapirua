@@ -44,6 +44,15 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}th{col
 .auto-note{color:var(--mut);font-size:12px;margin-top:5px}
 .auto-status{color:var(--mut);font-size:12px;margin-top:10px;overflow-wrap:anywhere}
 .btn.wide{width:100%;margin-top:10px}
+/* Live announcement ticker */
+.announcement-bar{display:flex;align-items:center;gap:12px;overflow:hidden;background:linear-gradient(90deg,#171d31,#22213a,#171d31);border-bottom:1px solid #4b4261;padding:10px 0;min-height:44px}
+.announcement-label{flex:0 0 auto;margin-left:20px;color:var(--gold);font-size:11px;font-weight:900;letter-spacing:1.5px}
+.announcement-window{overflow:hidden;min-width:0;flex:1;mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent)}
+.announcement-track{display:flex;width:max-content;animation:announcementScroll 28s linear infinite;will-change:transform}
+.announcement-track span{white-space:nowrap;padding-right:72px;font-weight:750;color:var(--txt)}
+.announcement-bar:hover .announcement-track{animation-play-state:paused}
+@keyframes announcementScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+@media(prefers-reduced-motion:reduce){.announcement-track{animation-duration:90s}}
 </style>
 </head>
 <body>
@@ -55,6 +64,15 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}th{col
     <div class="bal">🪙 <span id="bal">0</span></div>
   </div>
 </header>
+<div class="announcement-bar" role="status" aria-label="Live site announcement">
+  <div class="announcement-label">📢 LIVE</div>
+  <div class="announcement-window">
+    <div class="announcement-track" id="announcementTrack">
+      <span id="announcementText">Welcome to Royal Paper Casino — virtual points only.</span>
+      <span id="announcementTextClone" aria-hidden="true">Welcome to Royal Paper Casino — virtual points only.</span>
+    </div>
+  </div>
+</div>
 
 <div class="wrap">
   <div>
@@ -720,6 +738,32 @@ api('me').then(d => {
 setSide('buy');
 load();
 setInterval(load, 1000);
+
+// Live announcement ticker (message is set by admins on the main site)
+let announcementMessage='';
+function paintAnnouncement(message){
+  const text=String(message||'').trim()||'Welcome to Royal Paper Casino — virtual points only.';
+  if(text===announcementMessage)return;
+  announcementMessage=text;
+  const first=document.getElementById('announcementText');
+  const second=document.getElementById('announcementTextClone');
+  if(first)first.textContent=text;
+  if(second)second.textContent=text;
+  const track=document.getElementById('announcementTrack');
+  if(track){track.style.animation='none';void track.offsetWidth;track.style.animation='';}
+}
+async function loadAnnouncement(){
+  try{
+    const response=await fetch('/api/announcement',{cache:'no-store'});
+    if(!response.ok)return;
+    const data=await response.json();
+    paintAnnouncement(data.message);
+  }catch(error){
+    // Keep the last announcement visible if the server is temporarily unavailable.
+  }
+}
+loadAnnouncement();
+setInterval(loadAnnouncement,10000);
 </script>
 </body>
 </html>
