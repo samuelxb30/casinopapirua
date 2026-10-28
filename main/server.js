@@ -46,12 +46,51 @@ const mm = (c, k) => {
 const cm = (p, n) => 0.97 / Math.pow(1 - p, n);
 const RED = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
 
+// ---------- Virtual crypto market configuration ----------
+
+const COINS = {
+  BTCP: {
+    name: 'Paper Bitcoin', emoji: '₿', category: 'crypto',
+    anchor: 50000, vol: 0.025
+  },
+  MOONZ: {
+    name: 'MoonZ', emoji: '🚀', category: 'memecoin',
+    anchor: 1.8, vol: 0.075
+  },
+  DOGO: {
+    name: 'Dogo Coin', emoji: '🐶', category: 'memecoin',
+    anchor: 0.42, vol: 0.060
+  },
+  WOJK: {
+    name: 'Wojak Finance', emoji: '😭', category: 'memecoin',
+    anchor: 0.12, vol: 0.095
+  },
+  PEPO: {
+    name: 'Pepo the Frog', emoji: '🐸', category: 'memecoin',
+    anchor: 0.0035, vol: 0.120
+  }
+};
+
+const gauss = () => {
+  let u = 0, v = 0;
+  while (!u) u = rand();
+  while (!v) v = rand();
+  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+};
+
+for (const c of Object.values(COINS)) {
+  c.price = c.anchor;
+  c.mu = 0;
+  c.hist = [];
+}
+
+let tickN = 0;
+let tradeId = 0;
+const TRADES = [];
+
 // ---------- Database setup ----------
 
 async function initDatabase() {
-  // Compatible with the tables created in the Neon SQL Editor.
-  // Existing users, balances and holdings are not dropped.
-
   await pool.query(`
     ALTER TABLE users
     ADD COLUMN IF NOT EXISTS is_admin BOOLEAN NOT NULL DEFAULT FALSE
@@ -123,7 +162,6 @@ async function initDatabase() {
     ON trades(user_id, created_at DESC)
   `);
 
-  // Seed the market without overwriting prices already saved in Neon.
   for (const [sym, c] of Object.entries(COINS)) {
     await pool.query(`
       INSERT INTO market_coins(symbol, name, category, price)
@@ -132,7 +170,6 @@ async function initDatabase() {
     `, [sym, c.name, c.category, c.anchor]);
   }
 
-  // Load the latest persisted market prices.
   const saved = await pool.query('SELECT symbol, price FROM market_coins');
 
   for (const row of saved.rows) {
@@ -261,7 +298,6 @@ async function hasGame(uid) {
 
 // ---------- Pages ----------
 
-// Keep server.js and secrets out of the public web directory.
 app.get('/', (req, res) =>
   res.sendFile(path.join(__dirname, 'index.html'))
 );
@@ -350,17 +386,27 @@ app.get('/api/me', auth, route(async (req, res) => {
     const g = result.rows[0];
     const s = typeof g.state === 'string' ? JSON.parse(g.state) : g.state;
 
-    game = {
-      type: g.type,
-      bet: Number(g.bet),
-      revealed: s.revealed,
-      count: s.count,
-      steps: s.steps,
-      diff: s.diff,
-      mult: g.type === 'mines'
-        ? mm(s.count, s.revealed.length)
-        : cm(P[s.diff], s.steps)
-    };
+    if (g.type === 'higherlower') {
+      game = {
+        type: g.type,
+        bet: Number(g.bet),
+        card: s.card,
+        streak: s.streak,
+        multiplier: s.multiplier
+      };
+    } else {
+      game = {
+        type: g.type,
+        bet: Number(g.bet),
+        revealed: s.revealed,
+        count: s.count,
+        steps: s.steps,
+        diff: s.diff,
+        mult: g.type === 'mines'
+          ? mm(s.count, s.revealed.length)
+          : cm(P[s.diff], s.steps)
+      };
+    }
   }
 
   res.json({
@@ -595,7 +641,6 @@ app.post('/api/chicken/cashout', auth, route(async (req, res) => {
   res.json({ payout, mult, balance: await getBal(req.user.id) });
 }));
 
-
 /* ---------- Themed Boxes ---------- */
 
 const CASE_REWARDS = {
@@ -666,11 +711,9 @@ app.post('/api/boxes/open', auth, route(async (req, res) => {
   const bet = await validBet(req, res);
   if (!bet) return;
 
-  // The server decides the result. The animation only reveals it.
   const reward = pickCaseReward(theme);
   const payout = Math.floor(bet * reward.multiplier);
 
-  // The bet is charged and the reward is credited together.
   await transaction(async client => {
     const balanceResult = await client.query(
       'SELECT balance FROM users WHERE id=$1 FOR UPDATE',
@@ -690,14 +733,8 @@ app.post('/api/boxes/open', auth, route(async (req, res) => {
     );
   });
 
-  // Fill the reel with display items, then place the server-selected
-  // reward at the fixed stopping position.
   const winnerIndex = 36;
-  const items = Array.from({ length: 45 }, () => {
-    const displayReward = pickCaseReward(theme);
-    return displayReward;
-  });
-
+  const items = Array.from({ length: 45 }, () => pickCaseReward(theme));
   items[winnerIndex] = reward;
 
   res.json({
@@ -707,6 +744,264 @@ app.post('/api/boxes/open', auth, route(async (req, res) => {
     reward,
     payout,
     balance: await getBal(req.user.id)
+  });
+}));
+
+/* ---------- Higher or Lower ---------- */
+
+const HL_MAX_MULTIPLIER = 1000;
+
+function hlRandomCard() {
+  const rank = crypto.randomInt(2, 15);
+  const suits = ['♠', '♥', '♦', '♣'];
+  const suit = suits[crypto.randomInt(suits.length)];
+
+  const labels = {
+    11: 'J',
+    12: 'Q',
+    13: 'K',
+    14: 'A'
+  };
+
+  return {
+    rank,
+    label: labels[rank] || String(rank),
+    suit
+  };
+}
+
+function hlMultiplier(currentRank, guess) {
+  const winningRanks = guess === 'higher'
+    ? 14 - currentRank
+    : currentRank - 2;
+
+  if (winningRanks <= 0) return 0;
+
+  return Math.min(
+    HL_MAX_MULTIPLIER,
+    0.94 / (winningRanks / 13)
+  );
+}
+
+function hlSafePayout(bet, multiplier) {
+  return Math.min(
+    Number.MAX_SAFE_INTEGER,
+    Math.floor(bet * multiplier)
+  );
+}
+
+// Start a round: deduct the bet and save the first card.
+app.post('/api/higherlower/start', auth, route(async (req, res) => {
+  const bet = Number(req.body.bet);
+
+  if (!Number.isSafeInteger(bet) || bet < 1) {
+    return fail(res, 'Enter a valid whole-number bet');
+  }
+
+  const uid = req.user.id;
+  const card = hlRandomCard();
+
+  await transaction(async client => {
+    const userResult = await client.query(
+      'SELECT balance FROM users WHERE id=$1 FOR UPDATE',
+      [uid]
+    );
+
+    if (!userResult.rows.length) {
+      const err = new Error('User not found');
+      err.status = 404;
+      throw err;
+    }
+
+    if (Number(userResult.rows[0].balance) < bet) {
+      const err = new Error('Not enough balance');
+      err.status = 400;
+      throw err;
+    }
+
+    const existing = await client.query(
+      'SELECT type FROM games WHERE user_id=$1 FOR UPDATE',
+      [uid]
+    );
+
+    if (existing.rows.length) {
+      const err = new Error('Finish your current game first');
+      err.status = 400;
+      throw err;
+    }
+
+    await client.query(
+      'UPDATE users SET balance=balance-$1 WHERE id=$2',
+      [bet, uid]
+    );
+
+    await client.query(`
+      INSERT INTO games(user_id,type,bet,state)
+      VALUES($1,'higherlower',$2,$3::jsonb)
+    `, [
+      uid,
+      bet,
+      JSON.stringify({
+        card,
+        streak: 0,
+        multiplier: 1
+      })
+    ]);
+  });
+
+  res.json({
+    bet,
+    card,
+    balance: await getBal(uid)
+  });
+}));
+
+// Resolve a guess using the server-side saved card.
+app.post('/api/higherlower/guess', auth, route(async (req, res) => {
+  const uid = req.user.id;
+  const guess = req.body.guess;
+
+  if (!['higher', 'lower'].includes(guess)) {
+    return fail(res, 'Choose higher or lower');
+  }
+
+  const result = await transaction(async client => {
+    const gameResult = await client.query(
+      'SELECT type, bet, state FROM games WHERE user_id=$1 FOR UPDATE',
+      [uid]
+    );
+
+    const row = gameResult.rows[0];
+
+    if (!row || row.type !== 'higherlower') {
+      const err = new Error('No active Higher or Lower round');
+      err.status = 400;
+      throw err;
+    }
+
+    const state = typeof row.state === 'string'
+      ? JSON.parse(row.state)
+      : row.state;
+
+    const currentCard = state.card;
+
+    if (
+      (guess === 'higher' && currentCard.rank === 14) ||
+      (guess === 'lower' && currentCard.rank === 2)
+    ) {
+      const err = new Error('That guess is impossible for this card');
+      err.status = 400;
+      throw err;
+    }
+
+    const nextCard = hlRandomCard();
+
+    const correct = guess === 'higher'
+      ? nextCard.rank > currentCard.rank
+      : nextCard.rank < currentCard.rank;
+
+    const tie = nextCard.rank === currentCard.rank;
+
+    if (!correct) {
+      await client.query(
+        'DELETE FROM games WHERE user_id=$1',
+        [uid]
+      );
+
+      return {
+        correct: false,
+        tie,
+        card: nextCard
+      };
+    }
+
+    const stepMultiplier = hlMultiplier(currentCard.rank, guess);
+
+    state.streak += 1;
+    state.multiplier = Math.min(
+      HL_MAX_MULTIPLIER,
+      state.multiplier * stepMultiplier
+    );
+    state.card = nextCard;
+
+    await client.query(`
+      UPDATE games
+      SET state=$1::jsonb
+      WHERE user_id=$2 AND type='higherlower'
+    `, [JSON.stringify(state), uid]);
+
+    return {
+      correct: true,
+      tie: false,
+      card: nextCard,
+      streak: state.streak,
+      multiplier: state.multiplier
+    };
+  });
+
+  res.json({
+    ...result,
+    balance: await getBal(uid)
+  });
+}));
+
+// Cash out using the multiplier stored in PostgreSQL.
+app.post('/api/higherlower/cashout', auth, route(async (req, res) => {
+  const uid = req.user.id;
+
+  const result = await transaction(async client => {
+    const gameResult = await client.query(
+      'SELECT type, bet, state FROM games WHERE user_id=$1 FOR UPDATE',
+      [uid]
+    );
+
+    const row = gameResult.rows[0];
+
+    if (!row || row.type !== 'higherlower') {
+      const err = new Error('No active round to cash out');
+      err.status = 400;
+      throw err;
+    }
+
+    const state = typeof row.state === 'string'
+      ? JSON.parse(row.state)
+      : row.state;
+
+    const bet = Number(row.bet);
+    const multiplier = Number(state.multiplier);
+
+    if (
+      !Number.isSafeInteger(bet) ||
+      bet < 1 ||
+      !Number.isFinite(multiplier) ||
+      multiplier < 1 ||
+      multiplier > HL_MAX_MULTIPLIER
+    ) {
+      throw new Error('Invalid saved game state');
+    }
+
+    const payout = hlSafePayout(bet, multiplier);
+
+    await client.query(
+      'DELETE FROM games WHERE user_id=$1',
+      [uid]
+    );
+
+    await client.query(
+      'UPDATE users SET balance=balance+$1 WHERE id=$2',
+      [payout, uid]
+    );
+
+    return {
+      payout,
+      multiplier,
+      streak: state.streak
+    };
+  });
+
+  res.json({
+    ...result,
+    balance: await getBal(uid)
   });
 }));
 
@@ -758,46 +1053,6 @@ app.post('/api/roulette/spin', auth, route(async (req, res) => {
 }));
 
 // ---------- Virtual crypto market ----------
-
-const COINS = {
-  BTCP: {
-    name: 'Paper Bitcoin', emoji: '₿', category: 'crypto',
-    anchor: 50000, vol: 0.025
-  },
-  MOONZ: {
-    name: 'MoonZ', emoji: '🚀', category: 'memecoin',
-    anchor: 1.8, vol: 0.075
-  },
-  DOGO: {
-    name: 'Dogo Coin', emoji: '🐶', category: 'memecoin',
-    anchor: 0.42, vol: 0.060
-  },
-  WOJK: {
-    name: 'Wojak Finance', emoji: '😭', category: 'memecoin',
-    anchor: 0.12, vol: 0.095
-  },
-  PEPO: {
-    name: 'Pepo the Frog', emoji: '🐸', category: 'memecoin',
-    anchor: 0.0035, vol: 0.120
-  }
-};
-
-const gauss = () => {
-  let u = 0, v = 0;
-  while (!u) u = rand();
-  while (!v) v = rand();
-  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-};
-
-for (const c of Object.values(COINS)) {
-  c.price = c.anchor;
-  c.mu = 0;
-  c.hist = [];
-}
-
-let tickN = 0;
-let tradeId = 0;
-const TRADES = [];
 
 function logTrade(user, sym, side, coins, qty, price) {
   TRADES.push({
@@ -1157,13 +1412,10 @@ app.use((err, req, res, next) => {
 async function start() {
   await initDatabase();
 
-  // Fill the initial chart history.
   for (let i = 0; i < HIST; i++) tick();
 
-  // The simulated market continues running while the server is online.
   setInterval(tick, 1000);
 
-  // Save the latest prices so they can be restored after a redeploy.
   setInterval(() => {
     persistMarket().catch(err => console.error('Market save error:', err));
   }, 5000);

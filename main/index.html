@@ -1,4 +1,4 @@
-
+```html
 <!doctype html>
 <html lang="en">
 <head>
@@ -71,7 +71,7 @@ td input{width:110px}
 .hide{display:none!important}
 .foot{text-align:center;color:var(--mut);font-size:12px;margin-top:30px}
 
-/* Case-opening game */
+/* Case opening */
 .case-intro{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:20px}
 .case-intro h2{margin:0;font-size:26px}
 .case-intro p{margin:5px 0;color:var(--mut)}
@@ -107,6 +107,23 @@ td input{width:110px}
 .case-result p{color:var(--mut);margin:5px 0}
 .case-result .result-payout{font-size:22px;font-weight:800;color:var(--gold);margin-top:10px}
 .case-note{color:var(--mut);font-size:12px;margin-top:18px}
+
+/* Higher or Lower */
+.hl-layout{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin:18px 0}
+.hl-card{background:#0d1220;border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center;min-width:0}
+.hl-playing-card{height:190px;max-width:145px;width:100%;margin:14px auto 0;border-radius:12px;background:linear-gradient(145deg,#fff,#e8eaf2);color:#101522;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;padding:12px;font-weight:900;box-shadow:0 8px 22px #0004;position:relative}
+.hl-playing-card .hl-rank{font-size:34px;line-height:1}
+.hl-playing-card .hl-suit{font-size:44px;align-self:flex-end;line-height:1}
+.hl-playing-card.red-suit{color:#d62839}
+.hl-playing-card.black-suit{color:#151925}
+.hl-pulse{animation:hlPulse .28s ease-out}
+@keyframes hlPulse{0%{transform:scale(.92) rotate(-2deg);opacity:.5}100%{transform:scale(1) rotate(0);opacity:1}}
+.hl-buttons{display:flex;justify-content:center;gap:10px;flex-wrap:wrap;margin:18px 0}
+.hl-stat{background:#0d1220;border:1px solid var(--line);border-radius:12px;padding:14px;text-align:center;min-width:0}
+.hl-stat small{display:block;color:var(--mut);margin-bottom:6px}
+.hl-stat strong{font-size:21px;color:var(--gold);overflow-wrap:anywhere}
+#hlstatus{border:1px solid var(--line);background:#0d1220;border-radius:10px;padding:14px;text-align:center;margin-top:14px}
+#hlbet{width:150px}
 @media(max-width:650px){
   header{padding:12px}
   nav{padding:12px 12px 0}
@@ -115,6 +132,14 @@ td input{width:110px}
   .case-themes{grid-template-columns:repeat(2,minmax(0,1fr))}
   .spin-item{flex-basis:100px;width:100px}
   .spin-window{height:158px}
+  .hl-layout{gap:8px}
+  .hl-card{padding:10px}
+  .hl-playing-card{height:150px}
+  .hl-playing-card .hl-rank{font-size:28px}
+  .hl-playing-card .hl-suit{font-size:35px}
+  .hl-stat{padding:10px 5px}
+  .hl-stat strong{font-size:17px}
+  .hl-buttons .btn{padding:11px 13px}
 }
 </style>
 </head>
@@ -138,6 +163,7 @@ td input{width:110px}
   <div class="me"><span id="who" style="color:var(--mut)"></span><div class="bal">🪙 <span id="bal">0</span></div><button class="btn ghost" onclick="logout()">Log out</button></div>
 </header>
 <nav id="nav"></nav>
+
 <main>
   <section id="mines" class="card">
     <div class="row">
@@ -151,12 +177,16 @@ td input{width:110px}
   </section>
 
   <section id="roulette" class="card hide">
-    <div class="row"><div><label>Chip value</label><input id="rchip" type="number" min="1" value="10"></div>
-      <button class="btn" onclick="spin()">Spin</button><button class="btn ghost" onclick="rbets=[];drawBets()">Clear bets</button>
-      <div class="wheel" id="wheel">?</div></div>
+    <div class="row">
+      <div><label>Chip value</label><input id="rchip" type="number" min="1" value="10"></div>
+      <button class="btn" onclick="spin()">Spin</button>
+      <button class="btn ghost" onclick="rbets=[];drawBets()">Clear bets</button>
+      <div class="wheel" id="wheel">?</div>
+    </div>
     <div class="board" id="rboard"></div>
     <div class="out" id="rout"></div>
-    <div class="chips" id="rbets"></div><div class="info" id="rinfo">Click a number or an outside bet to place a chip. Numbers pay 35:1, outside bets 1:1.</div>
+    <div class="chips" id="rbets"></div>
+    <div class="info" id="rinfo">Click a number or an outside bet to place a chip. Numbers pay 35:1, outside bets 1:1.</div>
   </section>
 
   <section id="boxes" class="card hide">
@@ -164,27 +194,22 @@ td input{width:110px}
       <div><h2>🎁 Case Opening</h2><p>Choose a case, spin the strip, reveal your virtual item.</p></div>
       <div class="bal">SIMULATED ITEMS ONLY</div>
     </div>
-
     <div class="case-themes">
       <button class="case-theme selected" data-theme="csstyle" onclick="chooseCase('csstyle')"><span class="emoji">🔫</span><strong>Neon Cases</strong><small>Common → Legendary</small></button>
       <button class="case-theme" data-theme="crypto" onclick="chooseCase('crypto')"><span class="emoji">₿</span><strong>Crypto Cases</strong><small>Coins & digital loot</small></button>
       <button class="case-theme" data-theme="meme" onclick="chooseCase('meme')"><span class="emoji">🐸</span><strong>Meme Cases</strong><small>Chaotic collectibles</small></button>
       <button class="case-theme" data-theme="treasure" onclick="chooseCase('treasure')"><span class="emoji">💎</span><strong>Treasure Cases</strong><small>Gold & gems</small></button>
     </div>
-
     <div class="case-controls">
       <div><label>Virtual bet</label><input id="bbet" type="number" min="1" step="1" value="10"></div>
       <button class="btn" id="bopen" onclick="openCase()">🔓 Open case</button>
     </div>
-
     <div class="info" id="binfo">Choose a theme and open a case. The result is selected by the server.</div>
-
     <div class="spin-window" id="spinWindow">
       <div class="spin-marker"></div>
       <div class="spin-track" id="spinTrack"></div>
     </div>
     <div class="case-status" id="caseStatus">Ready when you are.</div>
-
     <div id="caseResult" class="case-result hide" aria-live="polite">
       <div class="result-emoji" id="resultEmoji">🎁</div>
       <h3 id="resultName">Item name</h3>
@@ -207,6 +232,42 @@ td input{width:110px}
     <div class="road" id="road"></div>
   </section>
 
+  <section id="higherlower" class="card hide">
+    <div class="case-intro">
+      <div>
+        <h2>🃏 Higher or Lower</h2>
+        <p>Guess whether the next card is higher or lower. Equal ranks lose.</p>
+      </div>
+      <div class="bal">VIRTUAL POINTS ONLY</div>
+    </div>
+    <div class="row">
+      <div><label>Virtual bet</label><input id="hlbet" type="number" min="1" step="1" value="10"></div>
+      <button class="btn" id="hlstart" onclick="hlStart()">Start round</button>
+    </div>
+    <div class="hl-layout">
+      <div class="hl-card">
+        <span style="color:var(--mut)">CURRENT CARD</span>
+        <div id="hlcurrent" class="hl-playing-card"><span class="hl-rank">?</span><span class="hl-suit">🂠</span></div>
+      </div>
+      <div class="hl-card">
+        <span style="color:var(--mut)">NEXT CARD</span>
+        <div id="hlnext" class="hl-playing-card"><span class="hl-rank">?</span><span class="hl-suit">🂠</span></div>
+      </div>
+    </div>
+    <div class="hl-buttons">
+      <button class="btn" id="hlhigher" onclick="hlGuess('higher')" disabled>⬆ Higher</button>
+      <button class="btn" id="hllower" onclick="hlGuess('lower')" disabled>⬇ Lower</button>
+      <button class="btn alt" id="hlcash" onclick="hlCashout()" disabled>Cash out</button>
+    </div>
+    <div class="hl-layout">
+      <div class="hl-stat"><small>Winning guesses</small><strong id="hlstreak">0</strong></div>
+      <div class="hl-stat"><small>Multiplier</small><strong id="hlmult">1.00x</strong></div>
+    </div>
+    <div class="hl-stat"><small>Potential payout</small><strong id="hlpayout">0</strong></div>
+    <div id="hlstatus" aria-live="polite">Set your virtual bet and start a round.</div>
+    <p class="case-note">Aces are high, twos are low, and equal ranks lose. Your round and multiplier are stored on the server.</p>
+  </section>
+
   <section id="admin" class="card hide">
     <h3 style="margin-top:0">Admin · Manage balances</h3>
     <table><thead><tr><th>User</th><th>Balance</th><th>Amount</th><th></th></tr></thead><tbody id="utable"></tbody></table>
@@ -219,111 +280,324 @@ td input{width:110px}
 const $=s=>document.querySelector(s), P={easy:.08,medium:.15,hard:.25}, CMAX=12, RED=[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
 let token=localStorage.token, me=null, mode='login';
 const fmt=n=>Math.floor(Number(n)||0).toLocaleString(), cm=(d,n)=>.97/Math.pow(1-P[d],n);
-function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(e.t);e.t=setTimeout(()=>e.classList.remove('show'),2600)}
+
+function toast(t){
+  const e=$('#toast');
+  e.textContent=t;
+  e.classList.add('show');
+  clearTimeout(e.t);
+  e.t=setTimeout(()=>e.classList.remove('show'),2600);
+}
+
 async function api(path,body){
   try{
-    const r=await fetch('/api/'+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',Authorization:token||''},body:body?JSON.stringify(body):undefined});
+    const r=await fetch('/api/'+path,{
+      method:body?'POST':'GET',
+      headers:{'Content-Type':'application/json',Authorization:token||''},
+      body:body?JSON.stringify(body):undefined
+    });
     const d=await r.json();
-    if(!r.ok){toast(d.error||'Error');if(r.status===401&&token)logout();return null}
-    return d
-  }catch(e){toast('Cannot reach server');return null}
+    if(!r.ok){
+      toast(d.error||'Error');
+      if(r.status===401&&token)logout();
+      return null;
+    }
+    return d;
+  }catch(e){
+    toast('Cannot reach server');
+    return null;
+  }
 }
-const setBal=n=>{if(me)me.balance=n;$('#bal').textContent=fmt(n)};
+
+const setBal=n=>{
+  if(me)me.balance=n;
+  $('#bal').textContent=fmt(n);
+};
 const num=id=>parseInt($(id).value)||0;
 
 // Authentication
-function authMode(m){mode=m;$('#ab').textContent=m==='login'?'Log in':'Create account';$('#tl').className='btn'+(m==='login'?'':' ghost');$('#tr').className='btn'+(m==='register'?'':' ghost')}
-async function doAuth(){const d=await api(mode,{username:$('#u').value.trim(),password:$('#p').value});if(!d)return;token=localStorage.token=d.token;await init()}
-async function logout(){if(token)await api('logout',{});localStorage.removeItem('token');token=null;$('#auth').classList.remove('hide')}
+function authMode(m){
+  mode=m;
+  $('#ab').textContent=m==='login'?'Log in':'Create account';
+  $('#tl').className='btn'+(m==='login'?'':' ghost');
+  $('#tr').className='btn'+(m==='register'?'':' ghost');
+}
+
+async function doAuth(){
+  const d=await api(mode,{
+    username:$('#u').value.trim(),
+    password:$('#p').value
+  });
+  if(!d)return;
+  token=localStorage.token=d.token;
+  await init();
+}
+
+async function logout(){
+  if(token)await api('logout',{});
+  localStorage.removeItem('token');
+  token=null;
+  $('#auth').classList.remove('hide');
+}
+
 async function init(){
   if(!token)return;
-  const d=await api('me');if(!d)return;me=d;
-  $('#auth').classList.add('hide');$('#who').textContent=d.username+(d.isAdmin?' · admin':'');setBal(d.balance);
-  const tabs=[['mines','💎 Mines'],['roulette','🎡 Roulette'],['boxes','🎁 Boxes'],['chicken','🐔 Chicken Road']];
+  const d=await api('me');
+  if(!d)return;
+  me=d;
+  $('#auth').classList.add('hide');
+  $('#who').textContent=d.username+(d.isAdmin?' · admin':'');
+  setBal(d.balance);
+
+  const tabs=[
+    ['mines','💎 Mines'],
+    ['roulette','🎡 Roulette'],
+    ['boxes','🎁 Boxes'],
+    ['chicken','🐔 Chicken Road'],
+    ['higherlower','🃏 Higher or Lower']
+  ];
   if(d.isAdmin)tabs.push(['admin','🛠 Admin']);
-  $('#nav').innerHTML=tabs.map(t=>`<button data-t="${t[0]}" onclick="show('${t[0]}')">${t[1]}</button>`).join('')+`<button onclick="location='/trade.html'" style="border-color:var(--gold);color:var(--gold)">📈 Crypto Trading</button>`;
-  show(d.game?d.game.type:'mines');if(d.game)resume(d.game)
+
+  $('#nav').innerHTML=tabs.map(t=>
+    `<button data-t="${t[0]}" onclick="show('${t[0]}')">${t[1]}</button>`
+  ).join('')+
+  `<button onclick="location='/trade.html'" style="border-color:var(--gold);color:var(--gold)">📈 Crypto Trading</button>`;
+
+  show(d.game?d.game.type:'mines');
+  if(d.game)resume(d.game);
 }
-function show(t){document.querySelectorAll('main section').forEach(s=>s.classList.toggle('hide',s.id!==t));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));if(t==='admin')loadUsers()}
+
+function show(t){
+  document.querySelectorAll('main section').forEach(s=>
+    s.classList.toggle('hide',s.id!==t)
+  );
+  document.querySelectorAll('nav button').forEach(b=>
+    b.classList.toggle('on',b.dataset.t===t)
+  );
+  if(t==='admin')loadUsers();
+}
 
 // Mines
 let mOn=false;
-$('#mcount').innerHTML=[...Array(24)].map((_,i)=>`<option ${i==2?'selected':''}>${i+1}</option>`).join('');
-function mGrid(){$('#mgrid').innerHTML=[...Array(25)].map((_,i)=>`<button class="tile" data-i="${i}" onclick="minesPick(${i})" ${mOn?'':'disabled'}></button>`).join('')}
+
+$('#mcount').innerHTML=[...Array(24)].map((_,i)=>
+  `<option ${i==2?'selected':''}>${i+1}</option>`
+).join('');
+
+function mGrid(){
+  $('#mgrid').innerHTML=[...Array(25)].map((_,i)=>
+    `<button class="tile" data-i="${i}" onclick="minesPick(${i})" ${mOn?'':'disabled'}></button>`
+  ).join('');
+}
 mGrid();
-function mState(on){mOn=on;$('#mstart').disabled=on;$('#mcash').disabled=true;document.querySelectorAll('.tile').forEach(t=>t.disabled=!on)}
-async function minesStart(){const d=await api('mines/start',{bet:num('#mbet'),mines:num('#mcount')});if(!d)return;setBal(d.balance);mState(true);mGrid();$('#minfo').innerHTML=`Next tile pays <b>${d.next.toFixed(2)}x</b>`}
-async function minesPick(i){const d=await api('mines/reveal',{index:i});if(!d)return;const t=document.querySelector(`.tile[data-i="${i}"]`);if(d.boom){t.textContent='💥';t.classList.add('bomb');mEnd(d.mines);setBal(d.balance);$('#minfo').innerHTML='💥 Boom! You lost your bet.';return}t.textContent='💎';t.classList.add('gem');t.disabled=true;$('#mcash').disabled=false;if(d.done){mEnd(d.mines);setBal(d.balance);$('#minfo').innerHTML=`Cleared the board! Won <b>${fmt(d.payout)}</b>`;return}$('#minfo').innerHTML=`Current <b>${d.mult.toFixed(2)}x</b> · next ${d.next.toFixed(2)}x`}
-async function minesCash(){const d=await api('mines/cashout',{});if(!d)return;setBal(d.balance);mEnd(d.mines);$('#minfo').innerHTML=`Cashed out at <b>${d.mult.toFixed(2)}x</b> · won <b>${fmt(d.payout)}</b>`}
-function mEnd(mines){mState(false);mines.forEach(m=>{const t=document.querySelector(`.tile[data-i="${m}"]`);if(t&&!t.classList.contains('bomb')){t.textContent='💣';t.classList.add('dim')}})}
+
+function mState(on){
+  mOn=on;
+  $('#mstart').disabled=on;
+  $('#mcash').disabled=true;
+  document.querySelectorAll('.tile').forEach(t=>t.disabled=!on);
+}
+
+async function minesStart(){
+  const d=await api('mines/start',{bet:num('#mbet'),mines:num('#mcount')});
+  if(!d)return;
+  setBal(d.balance);
+  mState(true);
+  mGrid();
+  $('#minfo').innerHTML=`Next tile pays <b>${d.next.toFixed(2)}x</b>`;
+}
+
+async function minesPick(i){
+  const d=await api('mines/reveal',{index:i});
+  if(!d)return;
+  const t=document.querySelector(`.tile[data-i="${i}"]`);
+  if(d.boom){
+    t.textContent='💥';
+    t.classList.add('bomb');
+    mEnd(d.mines);
+    setBal(d.balance);
+    $('#minfo').innerHTML='💥 Boom! You lost your bet.';
+    return;
+  }
+  t.textContent='💎';
+  t.classList.add('gem');
+  t.disabled=true;
+  $('#mcash').disabled=false;
+  if(d.done){
+    mEnd(d.mines);
+    setBal(d.balance);
+    $('#minfo').innerHTML=`Cleared the board! Won <b>${fmt(d.payout)}</b>`;
+    return;
+  }
+  $('#minfo').innerHTML=`Current <b>${d.mult.toFixed(2)}x</b> · next ${d.next.toFixed(2)}x`;
+}
+
+async function minesCash(){
+  const d=await api('mines/cashout',{});
+  if(!d)return;
+  setBal(d.balance);
+  mEnd(d.mines);
+  $('#minfo').innerHTML=`Cashed out at <b>${d.mult.toFixed(2)}x</b> · won <b>${fmt(d.payout)}</b>`;
+}
+
+function mEnd(mines){
+  mState(false);
+  mines.forEach(m=>{
+    const t=document.querySelector(`.tile[data-i="${m}"]`);
+    if(t&&!t.classList.contains('bomb')){
+      t.textContent='💣';
+      t.classList.add('dim');
+    }
+  });
+}
 
 // Roulette
 let rbets=[];
 const nb=[`<div class="n zero" onclick="addBet('number',0)">0</div>`];
-for(let r=3;r>=1;r--)for(let c=0;c<12;c++){const n=c*3+r;nb.push(`<div class="n ${RED.includes(n)?'red':'black'}" onclick="addBet('number',${n})">${n}</div>`)}
-$('#rboard').innerHTML=nb.join('');
-$('#rout').innerHTML=[['red','🔴 Red'],['black','⚫ Black'],['even','Even'],['odd','Odd'],['low','1–18'],['high','19–36']].map(b=>`<button onclick="addBet('${b[0]}')">${b[1]}</button>`).join('');
-function addBet(type,value){const a=num('#rchip');if(a<1)return;const b=rbets.find(x=>x.type===type&&x.value===value);b?b.amount+=a:rbets.push({type,value,amount:a});drawBets()}
-function drawBets(){$('#rbets').innerHTML=rbets.map(b=>`<span>${b.type==='number'?'#'+b.value:b.type} · ${fmt(b.amount)}</span>`).join('')||'<span>No bets placed</span>'}
-drawBets();
-async function spin(){const d=await api('roulette/spin',{bets:rbets});if(!d)return;const w=$('#wheel');let i=0;const iv=setInterval(()=>{w.textContent=Math.floor(Math.random()*37);if(++i>14){clearInterval(iv);w.textContent=d.number;w.style.color=d.number===0?'#2ecc71':RED.includes(d.number)?'#e74c3c':'#fff';setBal(d.balance);const net=d.payout-d.total;$('#rinfo').innerHTML=`Result <b>${d.number}</b> · ${net>=0?'won':'lost'} <b>${fmt(Math.abs(net))}</b>`;rbets=[];drawBets()}},70)}
 
-// Boxes: themed server-determined rewards + spinning animation
+for(let r=3;r>=1;r--){
+  for(let c=0;c<12;c++){
+    const n=c*3+r;
+    nb.push(`<div class="n ${RED.includes(n)?'red':'black'}" onclick="addBet('number',${n})">${n}</div>`);
+  }
+}
+
+$('#rboard').innerHTML=nb.join('');
+$('#rout').innerHTML=[
+  ['red','🔴 Red'],['black','⚫ Black'],['even','Even'],
+  ['odd','Odd'],['low','1–18'],['high','19–36']
+].map(b=>`<button onclick="addBet('${b[0]}')">${b[1]}</button>`).join('');
+
+function addBet(type,value){
+  const a=num('#rchip');
+  if(a<1)return;
+  const b=rbets.find(x=>x.type===type&&x.value===value);
+  b?b.amount+=a:rbets.push({type,value,amount:a});
+  drawBets();
+}
+
+function drawBets(){
+  $('#rbets').innerHTML=rbets.map(b=>
+    `<span>${b.type==='number'?'#'+b.value:b.type} · ${fmt(b.amount)}</span>`
+  ).join('')||'<span>No bets placed</span>';
+}
+drawBets();
+
+async function spin(){
+  const d=await api('roulette/spin',{bets:rbets});
+  if(!d)return;
+  const w=$('#wheel');
+  let i=0;
+  const iv=setInterval(()=>{
+    w.textContent=Math.floor(Math.random()*37);
+    if(++i>14){
+      clearInterval(iv);
+      w.textContent=d.number;
+      w.style.color=d.number===0?'#2ecc71':RED.includes(d.number)?'#e74c3c':'#fff';
+      setBal(d.balance);
+      const net=d.payout-d.total;
+      $('#rinfo').innerHTML=`Result <b>${d.number}</b> · ${net>=0?'won':'lost'} <b>${fmt(Math.abs(net))}</b>`;
+      rbets=[];
+      drawBets();
+    }
+  },70);
+}
+
+// Boxes
 const CASES={
   csstyle:{name:'Neon Cases',emoji:'🔫'},
   crypto:{name:'Crypto Cases',emoji:'₿'},
   meme:{name:'Meme Cases',emoji:'🐸'},
   treasure:{name:'Treasure Cases',emoji:'💎'}
 };
+
 let selectedCase='csstyle',caseBusy=false,spinTimer=null;
+
 function chooseCase(theme){
-  if(caseBusy)return;
-  if(!CASES[theme])return;
+  if(caseBusy||!CASES[theme])return;
   selectedCase=theme;
-  document.querySelectorAll('.case-theme').forEach(b=>b.classList.toggle('selected',b.dataset.theme===theme));
+  document.querySelectorAll('.case-theme').forEach(b=>
+    b.classList.toggle('selected',b.dataset.theme===theme)
+  );
   $('#binfo').textContent=CASES[theme].name+' selected. Choose a virtual bet and open the case.';
   $('#caseResult').classList.add('hide');
 }
-function rarityClass(r){return 'rarity-'+String(r||'common').toLowerCase()}
+
+function rarityClass(r){
+  return 'rarity-'+String(r||'common').toLowerCase();
+}
+
 function itemCard(item){
   const el=document.createElement('div');
   el.className='spin-item '+rarityClass(item.rarity);
-  const emoji=document.createElement('div');emoji.className='item-emoji';emoji.textContent=item.emoji||'🎁';
-  const name=document.createElement('div');name.className='item-name';name.textContent=item.name||'Mystery item';
-  const mult=document.createElement('div');mult.className='item-mult';mult.textContent=Number(item.multiplier||0).toFixed(2)+'x';
-  el.append(emoji,name,mult);return el;
+  const emoji=document.createElement('div');
+  emoji.className='item-emoji';
+  emoji.textContent=item.emoji||'🎁';
+  const name=document.createElement('div');
+  name.className='item-name';
+  name.textContent=item.name||'Mystery item';
+  const mult=document.createElement('div');
+  mult.className='item-mult';
+  mult.textContent=Number(item.multiplier||0).toFixed(2)+'x';
+  el.append(emoji,name,mult);
+  return el;
 }
+
 function renderStrip(items){
-  const track=$('#spinTrack');track.innerHTML='';
+  const track=$('#spinTrack');
+  track.innerHTML='';
   for(const item of items)track.appendChild(itemCard(item));
-  track.style.transition='none';track.style.transform='translateX(0px)';
+  track.style.transition='none';
+  track.style.transform='translateX(0px)';
 }
+
 async function openCase(){
   if(caseBusy)return;
   const bet=num('#bbet');
-  if(!Number.isSafeInteger(bet)||bet<1){toast('Enter a valid whole-number bet');return}
-  caseBusy=true;$('#bopen').disabled=true;$('#caseResult').classList.add('hide');
+  if(!Number.isSafeInteger(bet)||bet<1){
+    toast('Enter a valid whole-number bet');
+    return;
+  }
+  caseBusy=true;
+  $('#bopen').disabled=true;
+  $('#caseResult').classList.add('hide');
   $('#binfo').textContent='The server is selecting your reward...';
   $('#caseStatus').textContent='Preparing case...';
-  if(spinTimer){clearTimeout(spinTimer);spinTimer=null}
-  const d=await api('boxes/open',{theme:selectedCase,bet});
-  if(!d){caseBusy=false;$('#bopen').disabled=false;return}
-  if(!Array.isArray(d.items)||!d.items.length||!Number.isInteger(d.winnerIndex)||!d.items[d.winnerIndex]){
-    caseBusy=false;$('#bopen').disabled=false;toast('Invalid case response from server');return
+  if(spinTimer){
+    clearTimeout(spinTimer);
+    spinTimer=null;
   }
+
+  const d=await api('boxes/open',{theme:selectedCase,bet});
+  if(!d){
+    caseBusy=false;
+    $('#bopen').disabled=false;
+    return;
+  }
+
+  if(!Array.isArray(d.items)||!d.items.length||!Number.isInteger(d.winnerIndex)||!d.items[d.winnerIndex]){
+    caseBusy=false;
+    $('#bopen').disabled=false;
+    toast('Invalid case response from server');
+    return;
+  }
+
   renderStrip(d.items);
   const track=$('#spinTrack'),windowEl=$('#spinWindow');
-  const itemWidth=120, cardWidth=112;
+  const itemWidth=120,cardWidth=112;
   const startX=windowEl.clientWidth/2-cardWidth/2;
   track.style.transform=`translateX(${startX}px)`;
   void track.offsetWidth;
+
   requestAnimationFrame(()=>{
     track.style.transition='transform 6.2s cubic-bezier(.08,.68,.08,1)';
     const targetX=windowEl.clientWidth/2-(d.winnerIndex*itemWidth+cardWidth/2);
     track.style.transform=`translateX(${targetX}px)`;
   });
+
   $('#caseStatus').textContent='Opening... good luck!';
   $('#binfo').textContent='The reward has been determined by the server. Watch the strip stop on your item.';
+
   spinTimer=setTimeout(()=>{
     const item=d.reward||d.items[d.winnerIndex];
     setBal(d.balance);
@@ -335,30 +609,302 @@ async function openCase(){
     $('#caseResult').classList.remove('hide');
     $('#caseStatus').textContent='Case opened!';
     $('#binfo').textContent='You received '+item.name+'. Choose another theme or open another case.';
-    caseBusy=false;$('#bopen').disabled=false;spinTimer=null;
+    caseBusy=false;
+    $('#bopen').disabled=false;
+    spinTimer=null;
   },6350);
 }
 
 // Chicken Road
 let cDiff='easy',cSteps=0,cOn=false;
-function road(dead){$('#road').innerHTML=`<div class="lane ${cSteps===0&&cOn?'cur':''}">${cSteps===0?'🐔':'🏁'}<small>start</small></div>`+[...Array(CMAX)].map((_,i)=>{const n=i+1,cls=dead&&n===cSteps?'dead':n<cSteps?'pass':n===cSteps?'cur':'';return `<div class="lane ${cls}">${dead&&n===cSteps?'💥':n===cSteps?'🐔':n<cSteps?'✔':'🚗'}<small>${cm(cDiff,n).toFixed(2)}x</small></div>`}).join('')}
-function cState(on){cOn=on;$('#cstart').disabled=on;$('#cgo').disabled=!on;$('#ccash').disabled=!on||cSteps<1}
+
+function road(dead){
+  $('#road').innerHTML=
+    `<div class="lane ${cSteps===0&&cOn?'cur':''}">${cSteps===0?'🐔':'🏁'}<small>start</small></div>`+
+    [...Array(CMAX)].map((_,i)=>{
+      const n=i+1;
+      const cls=dead&&n===cSteps?'dead':n<cSteps?'pass':n===cSteps?'cur':'';
+      return `<div class="lane ${cls}">${dead&&n===cSteps?'💥':n===cSteps?'🐔':n<cSteps?'✔':'🚗'}<small>${cm(cDiff,n).toFixed(2)}x</small></div>`;
+    }).join('');
+}
 road();
-async function chStart(){cDiff=$('#cdiff').value;const d=await api('chicken/start',{bet:num('#cbet'),diff:cDiff});if(!d)return;setBal(d.balance);cSteps=0;cState(true);road();$('#cinfo').innerHTML=`Next lane pays <b>${cm(cDiff,1).toFixed(2)}x</b>`}
-async function chStep(){const d=await api('chicken/step',{});if(!d)return;cSteps=d.steps;if(d.dead){setBal(d.balance);cState(false);road(true);$('#cinfo').innerHTML='💥 The chicken got hit! You lost your bet.';return}if(d.done){setBal(d.balance);cState(false);road();$('#cinfo').innerHTML=`Crossed the whole road! Won <b>${fmt(d.payout)}</b>`;return}road();$('#ccash').disabled=false;$('#cinfo').innerHTML=`Current <b>${d.mult.toFixed(2)}x</b> · next ${cm(cDiff,cSteps+1).toFixed(2)}x`}
-async function chCash(){const d=await api('chicken/cashout',{});if(!d)return;setBal(d.balance);cState(false);$('#cinfo').innerHTML=`Cashed out at <b>${d.mult.toFixed(2)}x</b> · won <b>${fmt(d.payout)}</b>`}
+
+function cState(on){
+  cOn=on;
+  $('#cstart').disabled=on;
+  $('#cgo').disabled=!on;
+  $('#ccash').disabled=!on||cSteps<1;
+}
+
+async function chStart(){
+  cDiff=$('#cdiff').value;
+  const d=await api('chicken/start',{bet:num('#cbet'),diff:cDiff});
+  if(!d)return;
+  setBal(d.balance);
+  cSteps=0;
+  cState(true);
+  road();
+  $('#cinfo').innerHTML=`Next lane pays <b>${cm(cDiff,1).toFixed(2)}x</b>`;
+}
+
+async function chStep(){
+  const d=await api('chicken/step',{});
+  if(!d)return;
+  cSteps=d.steps;
+  if(d.dead){
+    setBal(d.balance);
+    cState(false);
+    road(true);
+    $('#cinfo').innerHTML='💥 The chicken got hit! You lost your bet.';
+    return;
+  }
+  if(d.done){
+    setBal(d.balance);
+    cState(false);
+    road();
+    $('#cinfo').innerHTML=`Crossed the whole road! Won <b>${fmt(d.payout)}</b>`;
+    return;
+  }
+  road();
+  $('#ccash').disabled=false;
+  $('#cinfo').innerHTML=`Current <b>${d.mult.toFixed(2)}x</b> · next ${cm(cDiff,cSteps+1).toFixed(2)}x`;
+}
+
+async function chCash(){
+  const d=await api('chicken/cashout',{});
+  if(!d)return;
+  setBal(d.balance);
+  cState(false);
+  $('#cinfo').innerHTML=`Cashed out at <b>${d.mult.toFixed(2)}x</b> · won <b>${fmt(d.payout)}</b>`;
+}
+
+// Higher or Lower
+let hlOn=false,hlCard=null,hlBet=0,hlStreak=0,hlMultiplier=1,hlBusy=false;
+
+function hlRenderCard(selector,card){
+  const el=$(selector);
+  if(!card){
+    el.className='hl-playing-card';
+    el.innerHTML='<span class="hl-rank">?</span><span class="hl-suit">🂠</span>';
+    return;
+  }
+
+  const red=card.suit==='♥'||card.suit==='♦';
+  el.className='hl-playing-card '+(red?'red-suit':'black-suit');
+  el.innerHTML='';
+
+  const rank=document.createElement('span');
+  rank.className='hl-rank';
+  rank.textContent=card.label;
+
+  const suit=document.createElement('span');
+  suit.className='hl-suit';
+  suit.textContent=card.suit;
+
+  el.append(rank,suit);
+  void el.offsetWidth;
+  el.classList.add('hl-pulse');
+}
+
+function hlControls(){
+  $('#hlstart').disabled=hlOn||hlBusy;
+  $('#hlhigher').disabled=!hlOn||hlBusy||hlCard?.rank===14;
+  $('#hllower').disabled=!hlOn||hlBusy||hlCard?.rank===2;
+  $('#hlcash').disabled=!hlOn||hlBusy||hlStreak<1;
+  $('#hlbet').disabled=hlOn||hlBusy;
+}
+
+function hlUpdateStats(){
+  $('#hlstreak').textContent=hlStreak;
+  $('#hlmult').textContent=Number(hlMultiplier).toFixed(2)+'x';
+  $('#hlpayout').textContent=fmt(Math.floor(hlBet*hlMultiplier));
+}
+
+function hlReset(message){
+  hlOn=false;
+  hlBusy=false;
+  hlCard=null;
+  hlBet=0;
+  hlStreak=0;
+  hlMultiplier=1;
+  hlRenderCard('#hlcurrent',null);
+  hlRenderCard('#hlnext',null);
+  hlUpdateStats();
+  hlControls();
+  $('#hlstatus').textContent=message;
+}
+
+async function hlStart(){
+  if(hlBusy||hlOn)return;
+
+  const bet=num('#hlbet');
+  if(!Number.isSafeInteger(bet)||bet<1){
+    toast('Enter a valid whole-number bet');
+    return;
+  }
+
+  hlBusy=true;
+  hlControls();
+  $('#hlstatus').textContent='Dealing your first card...';
+
+  const d=await api('higherlower/start',{bet});
+  if(!d){
+    hlBusy=false;
+    hlControls();
+    return;
+  }
+
+  hlBet=Number(d.bet);
+  hlCard=d.card;
+  hlStreak=0;
+  hlMultiplier=1;
+  hlOn=true;
+  hlBusy=false;
+
+  setBal(d.balance);
+  hlRenderCard('#hlcurrent',hlCard);
+  hlRenderCard('#hlnext',null);
+  hlUpdateStats();
+  hlControls();
+
+  $('#hlstatus').textContent='Round started. Guess whether the next card is higher or lower.';
+}
+
+async function hlGuess(guess){
+  if(!hlOn||hlBusy)return;
+
+  hlBusy=true;
+  hlControls();
+  $('#hlstatus').textContent='Revealing the next card...';
+
+  const d=await api('higherlower/guess',{guess});
+  if(!d){
+    hlBusy=false;
+    hlControls();
+    return;
+  }
+
+  setBal(d.balance);
+  hlRenderCard('#hlnext',d.card);
+
+  if(!d.correct){
+    hlOn=false;
+    hlBusy=false;
+    hlCard=d.card;
+
+    $('#hlstatus').textContent=d.tie
+      ?'Equal ranks! The round is over and your bet was lost.'
+      :'Incorrect guess. The round is over and your bet was lost.';
+
+    hlRenderCard('#hlcurrent',d.card);
+    hlRenderCard('#hlnext',null);
+
+    hlBet=0;
+    hlStreak=0;
+    hlMultiplier=1;
+    hlUpdateStats();
+    hlControls();
+    return;
+  }
+
+  hlCard=d.card;
+  hlStreak=Number(d.streak);
+  hlMultiplier=Number(d.multiplier);
+  hlBusy=false;
+
+  hlUpdateStats();
+  hlControls();
+
+  $('#hlstatus').textContent='Correct! Guess again or cash out your current virtual payout.';
+}
+
+async function hlCashout(){
+  if(!hlOn||hlBusy||hlStreak<1)return;
+
+  hlBusy=true;
+  hlControls();
+  $('#hlstatus').textContent='Cashing out...';
+
+  const d=await api('higherlower/cashout',{});
+  if(!d){
+    hlBusy=false;
+    hlControls();
+    return;
+  }
+
+  setBal(d.balance);
+
+  const message=`Cashed out! ${d.streak} correct guess(es), ${Number(d.multiplier).toFixed(2)}x multiplier, payout ${fmt(d.payout)} virtual points.`;
+  hlReset(message);
+}
 
 // Resume unfinished game after reload
 function resume(g){
-  if(g.type==='mines'){mState(true);mGrid();g.revealed.forEach(i=>{const t=document.querySelector(`.tile[data-i="${i}"]`);if(t){t.textContent='💎';t.classList.add('gem');t.disabled=true}});$('#mcash').disabled=!g.revealed.length;$('#minfo').innerHTML=`Resumed · <b>${g.mult.toFixed(2)}x</b>`}
-  if(g.type==='chicken'){cDiff=g.diff;$('#cdiff').value=g.diff;cSteps=g.steps;cState(true);road();$('#cinfo').innerHTML=`Resumed · <b>${g.mult.toFixed(2)}x</b>`}
+  if(g.type==='mines'){
+    mState(true);
+    mGrid();
+    g.revealed.forEach(i=>{
+      const t=document.querySelector(`.tile[data-i="${i}"]`);
+      if(t){
+        t.textContent='💎';
+        t.classList.add('gem');
+        t.disabled=true;
+      }
+    });
+    $('#mcash').disabled=!g.revealed.length;
+    $('#minfo').innerHTML=`Resumed · <b>${g.mult.toFixed(2)}x</b>`;
+  }
+
+  if(g.type==='chicken'){
+    cDiff=g.diff;
+    $('#cdiff').value=g.diff;
+    cSteps=g.steps;
+    cState(true);
+    road();
+    $('#cinfo').innerHTML=`Resumed · <b>${g.mult.toFixed(2)}x</b>`;
+  }
+
+  if(g.type==='higherlower'){
+    hlOn=true;
+    hlBusy=false;
+    hlBet=Number(g.bet);
+    hlCard=g.card;
+    hlStreak=Number(g.streak)||0;
+    hlMultiplier=Number(g.multiplier)||1;
+
+    $('#hlbet').value=hlBet;
+    hlRenderCard('#hlcurrent',hlCard);
+    hlRenderCard('#hlnext',null);
+    hlUpdateStats();
+    hlControls();
+
+    $('#hlstatus').textContent='Round resumed. Continue guessing or cash out after a correct guess.';
+  }
 }
 
 // Admin
-async function loadUsers(){const u=await api('admin/users');if(!u)return;$('#utable').innerHTML=u.map(x=>`<tr><td>${x.username}${x.is_admin?' ★':''}</td><td>${fmt(x.balance)}</td><td><input type="number" id="a${x.id}" placeholder="amount"></td><td><button class="btn" onclick="adj(${x.id},'add')">Add</button> <button class="btn ghost" onclick="adj(${x.id},'set')">Set</button></td></tr>`).join('')}
-async function adj(id,m){const v=document.getElementById('a'+id).value;if(v==='')return toast('Enter an amount (negative removes)');const d=await api('admin/balance',{id,amount:parseInt(v),mode:m});if(d){toast('Balance updated');loadUsers();const me2=await api('me');if(me2)setBal(me2.balance)}}
+async function loadUsers(){
+  const u=await api('admin/users');
+  if(!u)return;
+  $('#utable').innerHTML=u.map(x=>
+    `<tr><td>${x.username}${x.is_admin?' ★':''}</td><td>${fmt(x.balance)}</td><td><input type="number" id="a${x.id}" placeholder="amount"></td><td><button class="btn" onclick="adj(${x.id},'add')">Add</button> <button class="btn ghost" onclick="adj(${x.id},'set')">Set</button></td></tr>`
+  ).join('');
+}
+
+async function adj(id,m){
+  const v=document.getElementById('a'+id).value;
+  if(v==='')return toast('Enter an amount (negative removes)');
+  const d=await api('admin/balance',{id,amount:parseInt(v),mode:m});
+  if(d){
+    toast('Balance updated');
+    loadUsers();
+    const me2=await api('me');
+    if(me2)setBal(me2.balance);
+  }
+}
 
 init();
 </script>
 </body>
 </html>
+```
