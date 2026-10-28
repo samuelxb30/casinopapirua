@@ -595,33 +595,119 @@ app.post('/api/chicken/cashout', auth, route(async (req, res) => {
   res.json({ payout, mult, balance: await getBal(req.user.id) });
 }));
 
-// ---------- Boxes ----------
 
-const BOX = [[0, 45], [0.5, 20], [1.5, 22], [3, 11], [10, 2]];
+/* ---------- Themed Boxes ---------- */
 
-const pickBox = () => {
-  let r = rand() * 100;
-  for (const [m, w] of BOX) {
-    if ((r -= w) < 0) return m;
-  }
-  return 0;
+const CASE_REWARDS = {
+  csstyle: [
+    { name: 'Worn Alloy', emoji: '🔩', rarity: 'common', multiplier: 0, weight: 20 },
+    { name: 'Blue Circuit', emoji: '🔹', rarity: 'uncommon', multiplier: 0.5, weight: 30 },
+    { name: 'Neon Specter', emoji: '🔷', rarity: 'rare', multiplier: 1, weight: 27 },
+    { name: 'Violet Phantom', emoji: '🟣', rarity: 'epic', multiplier: 2, weight: 15 },
+    { name: 'Golden Protocol', emoji: '🌟', rarity: 'legendary', multiplier: 5, weight: 7 },
+    { name: 'Dragon Core', emoji: '🐉', rarity: 'legendary', multiplier: 10, weight: 1 }
+  ],
+  crypto: [
+    { name: 'Dust Token', emoji: '🪙', rarity: 'common', multiplier: 0, weight: 20 },
+    { name: 'Blue Chip', emoji: '🔹', rarity: 'uncommon', multiplier: 0.5, weight: 30 },
+    { name: 'Bitcoin Relic', emoji: '₿', rarity: 'rare', multiplier: 1, weight: 27 },
+    { name: 'Moon Rocket', emoji: '🚀', rarity: 'epic', multiplier: 2, weight: 15 },
+    { name: 'Diamond Wallet', emoji: '💎', rarity: 'legendary', multiplier: 5, weight: 7 },
+    { name: 'Golden Bitcoin', emoji: '🟡', rarity: 'legendary', multiplier: 10, weight: 1 }
+  ],
+  meme: [
+    { name: 'Empty Bag', emoji: '🛍️', rarity: 'common', multiplier: 0, weight: 20 },
+    { name: 'Sus Cat', emoji: '🐱', rarity: 'uncommon', multiplier: 0.5, weight: 30 },
+    { name: 'Wojak Badge', emoji: '😭', rarity: 'rare', multiplier: 1, weight: 27 },
+    { name: 'Moon Frog', emoji: '🐸', rarity: 'epic', multiplier: 2, weight: 15 },
+    { name: 'Ultra Meme', emoji: '🗿', rarity: 'legendary', multiplier: 5, weight: 7 },
+    { name: 'Golden Shiba', emoji: '🐕', rarity: 'legendary', multiplier: 10, weight: 1 }
+  ],
+  treasure: [
+    { name: 'Old Pebble', emoji: '🪨', rarity: 'common', multiplier: 0, weight: 20 },
+    { name: 'Silver Coin', emoji: '🥈', rarity: 'uncommon', multiplier: 0.5, weight: 30 },
+    { name: 'Sapphire', emoji: '🔷', rarity: 'rare', multiplier: 1, weight: 27 },
+    { name: 'Royal Ruby', emoji: '♦️', rarity: 'epic', multiplier: 2, weight: 15 },
+    { name: 'Crown Jewel', emoji: '👑', rarity: 'legendary', multiplier: 5, weight: 7 },
+    { name: 'Ancient Treasure', emoji: '💎', rarity: 'legendary', multiplier: 10, weight: 1 }
+  ]
 };
 
-app.post('/api/boxes/open', auth, route(async (req, res) => {
-  const pick = Number(req.body.pick);
+function pickCaseReward(theme) {
+  const rewards = CASE_REWARDS[theme];
+  const totalWeight = rewards.reduce((sum, item) => sum + item.weight, 0);
+  let roll = crypto.randomInt(totalWeight);
 
-  if (![0, 1, 2].includes(pick)) return fail(res, 'Pick a box');
-  if (await hasGame(req.user.id))
+  for (const item of rewards) {
+    roll -= item.weight;
+    if (roll < 0) {
+      const { weight, ...publicItem } = item;
+      return publicItem;
+    }
+  }
+
+  const { weight, ...fallback } = rewards[0];
+  return fallback;
+}
+
+app.post('/api/boxes/open', auth, route(async (req, res) => {
+  const theme = typeof req.body.theme === 'string'
+    ? req.body.theme
+    : 'csstyle';
+
+  if (!CASE_REWARDS[theme]) {
+    return fail(res, 'Choose a valid case theme');
+  }
+
+  if (await hasGame(req.user.id)) {
     return fail(res, 'Finish your current game first');
+  }
 
   const bet = await validBet(req, res);
   if (!bet) return;
 
-  const boxes = [pickBox(), pickBox(), pickBox()];
-  const payout = Math.floor(bet * boxes[pick]);
+  // The server decides the result. The animation only reveals it.
+  const reward = pickCaseReward(theme);
+  const payout = Math.floor(bet * reward.multiplier);
 
-  await addBal(req.user.id, payout - bet);
-  res.json({ boxes, payout, balance: await getBal(req.user.id) });
+  // The bet is charged and the reward is credited together.
+  await transaction(async client => {
+    const balanceResult = await client.query(
+      'SELECT balance FROM users WHERE id=$1 FOR UPDATE',
+      [req.user.id]
+    );
+
+    if (!balanceResult.rows.length ||
+        Number(balanceResult.rows[0].balance) < bet) {
+      const err = new Error('Not enough balance');
+      err.status = 400;
+      throw err;
+    }
+
+    await client.query(
+      'UPDATE users SET balance=balance-$1+$2 WHERE id=$3',
+      [bet, payout, req.user.id]
+    );
+  });
+
+  // Fill the reel with display items, then place the server-selected
+  // reward at the fixed stopping position.
+  const winnerIndex = 36;
+  const items = Array.from({ length: 45 }, () => {
+    const displayReward = pickCaseReward(theme);
+    return displayReward;
+  });
+
+  items[winnerIndex] = reward;
+
+  res.json({
+    theme,
+    items,
+    winnerIndex,
+    reward,
+    payout,
+    balance: await getBal(req.user.id)
+  });
 }));
 
 // ---------- Roulette ----------
