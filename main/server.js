@@ -21,6 +21,8 @@ const app = express();
 app.use(express.json({ limit: '20kb' }));
 
 const START_BALANCE = 1000;
+const DEFAULT_ANNOUNCEMENT = 'Welcome to Royal Paper Casino — virtual points only.';
+const ANNOUNCEMENT_MAX = 240;
 const CHICKEN_MAX = 12;
 const P = { easy: 0.08, medium: 0.15, hard: 0.25 };
 const FEE = 0.005;
@@ -145,6 +147,20 @@ async function initDatabase() {
       PRIMARY KEY (user_id, symbol)
     )
   `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS site_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await pool.query(`
+    INSERT INTO site_settings(key, value)
+    VALUES('announcement', $1)
+    ON CONFLICT(key) DO NOTHING
+  `, [DEFAULT_ANNOUNCEMENT]);
 
   await pool.query(`
     CREATE INDEX IF NOT EXISTS sessions_user_id_idx ON sessions(user_id)
@@ -422,7 +438,39 @@ app.post('/api/logout', auth, route(async (req, res) => {
   res.json({});
 }));
 
+// ---------- Announcement ticker ----------
+
+// Public: everyone (even logged-out visitors) can read the current message.
+app.get('/api/announcement', route(async (req, res) => {
+  const r = await pool.query(
+    "SELECT value FROM site_settings WHERE key='announcement'"
+  );
+  res.set('Cache-Control', 'no-store');
+  res.json({ message: r.rows.length ? r.rows[0].value : DEFAULT_ANNOUNCEMENT });
+}));
+
 // ---------- Admin ----------
+
+// Admin only: change the announcement message.
+app.post('/api/admin/announcement', auth, admin, route(async (req, res) => {
+  const raw = req.body && req.body.message;
+
+  if (typeof raw !== 'string') return fail(res, 'Message is required');
+
+  const message = raw.replace(/\s+/g, ' ').trim();
+
+  if (!message) return fail(res, 'Announcement cannot be empty');
+  if (message.length > ANNOUNCEMENT_MAX)
+    return fail(res, `Announcement must be ${ANNOUNCEMENT_MAX} characters or fewer`);
+
+  await pool.query(`
+    INSERT INTO site_settings(key, value, updated_at)
+    VALUES('announcement', $1, NOW())
+    ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value, updated_at=NOW()
+  `, [message]);
+
+  res.json({ success: true, message });
+}));
 
 app.get('/api/admin/users', auth, admin, route(async (req, res) => {
   const r = await pool.query(`

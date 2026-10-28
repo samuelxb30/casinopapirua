@@ -133,6 +133,19 @@ td input{width:110px}
 .admin-actions .delete-btn{color:var(--r);border-color:#6d3038}
 .admin-user{font-weight:700}
 .admin-badge{color:var(--gold);font-size:12px}
+/* Live announcement ticker */
+.announcement-bar{display:flex;align-items:center;gap:12px;overflow:hidden;background:linear-gradient(90deg,#171d31,#22213a,#171d31);border-bottom:1px solid #4b4261;padding:10px 0;min-height:44px}
+.announcement-label{flex:0 0 auto;margin-left:20px;color:var(--gold);font-size:11px;font-weight:900;letter-spacing:1.5px}
+.announcement-window{overflow:hidden;min-width:0;flex:1;mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent)}
+.announcement-track{display:flex;width:max-content;animation:announcementScroll 28s linear infinite;will-change:transform}
+.announcement-track span{white-space:nowrap;padding-right:72px;font-weight:750;color:var(--txt)}
+.announcement-bar:hover .announcement-track{animation-play-state:paused}
+@keyframes announcementScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.announcement-admin{margin:0 0 20px;padding:16px;background:#0d1220;border:1px solid var(--line);border-radius:12px}
+.announcement-admin .announcement-edit-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.announcement-admin input{width:auto;flex:1;min-width:180px}
+.announcement-help{font-size:12px;color:var(--mut);margin:7px 0 0}
+@media(prefers-reduced-motion:reduce){.announcement-track{animation-duration:90s}}
 @media(max-width:650px){
   header{padding:12px}
   nav{padding:12px 12px 0}
@@ -173,6 +186,15 @@ td input{width:110px}
   <div class="logo">♠ ROYAL PAPER CASINO<small>PLAY MONEY ONLY</small></div>
   <div class="me"><span id="who" style="color:var(--mut)"></span><div class="bal">🪙 <span id="bal">0</span></div><button class="btn ghost" onclick="logout()">Log out</button></div>
 </header>
+<div class="announcement-bar" role="status" aria-label="Live site announcement">
+  <div class="announcement-label">📢 LIVE</div>
+  <div class="announcement-window">
+    <div class="announcement-track" id="announcementTrack">
+      <span id="announcementText">Welcome to Royal Paper Casino — virtual points only.</span>
+      <span id="announcementTextClone" aria-hidden="true">Welcome to Royal Paper Casino — virtual points only.</span>
+    </div>
+  </div>
+</div>
 <nav id="nav"></nav>
 
 <main>
@@ -283,6 +305,16 @@ td input{width:110px}
   <section id="admin" class="card hide">
     <h3 style="margin-top:0">🛠 Admin · Manage Accounts</h3>
     <p class="admin-info">Rename accounts, adjust virtual balances, or permanently delete non-admin accounts.</p>
+    <div class="announcement-admin">
+      <h4 style="margin:0 0 10px">📢 Live announcement</h4>
+      <label for="announcementInput">Ticker message (updates for everyone)</label>
+      <div class="announcement-edit-row">
+        <input id="announcementInput" type="text" maxlength="240" placeholder="e.g. DOGO IS SKYROCKETING" style="width:auto;flex:1;min-width:180px">
+        <button class="btn" id="announcementSave" onclick="saveAnnouncement()">Publish</button>
+        <button class="btn ghost" onclick="loadAnnouncement(true)">Refresh</button>
+      </div>
+      <p class="announcement-help">Up to 240 characters. The message is saved on the server and shown to all visitors. Hover over the ticker to pause it.</p>
+    </div>
     <div class="admin-table-wrap">
       <table>
         <thead>
@@ -401,7 +433,7 @@ function show(t){
   document.querySelectorAll('nav button').forEach(b=>
     b.classList.toggle('on',b.dataset.t===t)
   );
-  if(t==='admin')loadUsers();
+  if(t==='admin'){loadUsers();loadAnnouncement(true);}
 }
 
 // Mines
@@ -1075,6 +1107,48 @@ async function adj(id,mode){
     $('#who').textContent=current.username+(current.isAdmin?' · admin':'');
   }
 }
+
+// Live announcement ticker
+let announcementMessage='Welcome to Royal Paper Casino — virtual points only.';
+function paintAnnouncement(message){
+  announcementMessage=String(message||'').trim()||'Welcome to Royal Paper Casino — virtual points only.';
+  const first=$('#announcementText'), second=$('#announcementTextClone');
+  if(first)first.textContent=announcementMessage;
+  if(second)second.textContent=announcementMessage;
+  // Restart the slow ticker so a newly published message appears immediately.
+  const track=$('#announcementTrack');
+  if(track){
+    track.style.animation='none';
+    void track.offsetWidth;
+    track.style.animation='';
+  }
+}
+async function loadAnnouncement(fillEditor=false){
+  try{
+    const response=await fetch('/api/announcement',{cache:'no-store'});
+    if(!response.ok)return;
+    const data=await response.json();
+    paintAnnouncement(data.message);
+    if(fillEditor&&$('#announcementInput'))$('#announcementInput').value=data.message||'';
+  }catch(error){
+    // Keep the last announcement visible if the server is temporarily unavailable.
+  }
+}
+async function saveAnnouncement(){
+  const input=$('#announcementInput');
+  const message=input?.value.trim()||'';
+  if(!message){toast('Enter an announcement first');return;}
+  const button=$('#announcementSave');
+  if(button)button.disabled=true;
+  const result=await api('admin/announcement',{message});
+  if(button)button.disabled=false;
+  if(!result)return;
+  paintAnnouncement(result.message||message);
+  if(input)input.value=result.message||message;
+  toast('Announcement published for everyone');
+}
+loadAnnouncement();
+setInterval(()=>loadAnnouncement(false),10000);
 
 init();
 </script>
