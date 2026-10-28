@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Royal Paper Casino</title>
+<style>
+:root{--bg:#0b0e17;--card:#141a2b;--line:#252d45;--gold:#f5c542;--txt:#e8ecf7;--mut:#8b94b3;--g:#2ecc71;--r:#e74c3c}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(1200px 600px at 50% -10%,#1b2342,var(--bg));color:var(--txt);font:15px/1.45 system-ui,Segoe UI,sans-serif;min-height:100vh}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 24px;border-bottom:1px solid var(--line);background:#0d1120cc;position:sticky;top:0;z-index:5;flex-wrap:wrap}
+.logo{font-size:20px;font-weight:800;letter-spacing:.5px;color:var(--gold)}
+.logo small{color:var(--mut);font-weight:500;font-size:11px;display:block;letter-spacing:2px}
+.me{display:flex;align-items:center;gap:14px}
+.bal{background:#0b0e17;border:1px solid var(--gold);color:var(--gold);padding:7px 16px;border-radius:99px;font-weight:700}
+nav{display:flex;gap:8px;padding:16px 24px 0;flex-wrap:wrap;max-width:1000px;margin:auto}
+nav button{background:var(--card);color:var(--mut);border:1px solid var(--line);padding:10px 18px;border-radius:10px;cursor:pointer;font-weight:600}
+nav button.on{color:#1a1300;background:var(--gold);border-color:var(--gold)}
+main{max-width:1000px;margin:auto;padding:16px 24px 60px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+.row{display:flex;gap:12px;flex-wrap:wrap;align-items:end;margin-bottom:16px}
+label{display:block;font-size:12px;color:var(--mut);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px}
+input,select{background:#0b0e17;border:1px solid var(--line);color:var(--txt);padding:10px 12px;border-radius:9px;font-size:15px;width:130px}
+.btn{background:var(--gold);color:#1a1300;border:0;padding:11px 20px;border-radius:9px;font-weight:700;cursor:pointer;font-size:15px}
+.btn:hover{filter:brightness(1.08)}.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.alt{background:var(--g);color:#06210f}.btn.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
+.info{color:var(--mut);margin:6px 0 14px}.info b{color:var(--gold)}
+#mgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;max-width:420px}
+.tile{aspect-ratio:1;border-radius:12px;border:1px solid var(--line);background:#1b2340;font-size:30px;cursor:pointer;color:var(--txt)}
+.tile:hover:not(:disabled){background:#26305a}.tile.gem{background:#12402a;border-color:var(--g)}.tile.bomb{background:#4a1a1a;border-color:var(--r)}.tile.dim{opacity:.5}
+.board{display:grid;grid-template-columns:50px repeat(12,1fr);gap:4px;max-width:640px;margin-bottom:12px}
+.n{padding:10px 0;text-align:center;border-radius:6px;font-weight:700;cursor:pointer;border:1px solid #0006;color:#fff}
+.n.red{background:#b3282d}.n.black{background:#1d1d24}.n.zero{background:#1c8a4b;grid-row:span 3;display:flex;align-items:center;justify-content:center}
+.out{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}.out button{background:#1b2340;color:var(--txt);border:1px solid var(--line);padding:9px 16px;border-radius:8px;cursor:pointer}
+.wheel{font-size:54px;font-weight:800;width:120px;height:120px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:5px solid var(--gold);background:#0b0e17}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;color:var(--mut)}.chips span{background:#0b0e17;border:1px solid var(--line);padding:4px 10px;border-radius:99px}
+.boxes{display:flex;gap:18px;flex-wrap:wrap}
+.box{width:150px;height:150px;border-radius:16px;border:2px solid var(--gold);background:linear-gradient(160deg,#2a2f4d,#171c33);font-size:52px;cursor:pointer;color:var(--gold);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.box small{font-size:20px;font-weight:800}.box.pick{box-shadow:0 0 0 4px #f5c54266}.box.win{background:#12402a;border-color:var(--g);color:var(--g)}.box.lose{border-color:var(--line);color:var(--mut)}
+.road{display:flex;gap:6px;overflow-x:auto;padding:10px 0}
+.lane{min-width:68px;height:110px;border-radius:10px;background:#1b2340;border:1px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:28px;position:relative}
+.lane small{position:absolute;bottom:6px;font-size:12px;color:var(--mut);font-weight:700}.lane.pass{background:#12402a}.lane.cur{border-color:var(--gold)}.lane.dead{background:#4a1a1a}
+table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line)}td input{width:110px}
+#auth{position:fixed;inset:0;background:#06080fee;display:flex;align-items:center;justify-content:center;z-index:20}
+#auth .card{width:340px}#auth input{width:100%;margin-bottom:12px}
+.tabs{display:flex;gap:6px;margin-bottom:16px}.tabs button{flex:1}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#222a46;border:1px solid var(--gold);padding:12px 22px;border-radius:10px;opacity:0;transition:.3s;pointer-events:none;z-index:30}
+#toast.show{opacity:1}.hide{display:none!important}
+.foot{text-align:center;color:var(--mut);font-size:12px;margin-top:30px}
+</style></head><body>
+
+<div id="auth"><div class="card">
+  <div class="logo" style="text-align:center;margin-bottom:16px">♠ ROYAL PAPER CASINO<small>PLAY MONEY ONLY</small></div>
+  <div class="tabs"><button class="btn" id="tl" onclick="authMode('login')">Log in</button><button class="btn ghost" id="tr" onclick="authMode('register')">Sign up</button></div>
+  <label>Username</label><input id="u" autocomplete="username">
+  <label>Password</label><input id="p" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doAuth()">
+  <button class="btn" style="width:100%" id="ab" onclick="doAuth()">Log in</button>
+</div></div>
+
+<header>
+  <div class="logo">♠ ROYAL PAPER CASINO<small>PLAY MONEY ONLY</small></div>
+  <div class="me"><span id="who" style="color:var(--mut)"></span><div class="bal">🪙 <span id="bal">0</span></div><button class="btn ghost" onclick="logout()">Log out</button></div>
+</header>
+<nav id="nav"></nav>
+<main>
+  <section id="mines" class="card">
+    <div class="row">
+      <div><label>Bet</label><input id="mbet" type="number" min="1" value="10"></div>
+      <div><label>Mines</label><select id="mcount"></select></div>
+      <button class="btn" id="mstart" onclick="minesStart()">Start</button>
+      <button class="btn alt" id="mcash" onclick="minesCash()" disabled>Cash out</button>
+    </div>
+    <div class="info" id="minfo">Pick tiles, avoid the mines. Each safe tile raises your multiplier.</div>
+    <div id="mgrid"></div>
+  </section>
+
+  <section id="roulette" class="card hide">
+    <div class="row"><div><label>Chip value</label><input id="rchip" type="number" min="1" value="10"></div>
+      <button class="btn" onclick="spin()">Spin</button><button class="btn ghost" onclick="rbets=[];drawBets()">Clear bets</button>
+      <div class="wheel" id="wheel">?</div></div>
+    <div class="board" id="rboard"></div>
+    <div class="out" id="rout"></div>
+    <div class="chips" id="rbets"></div><div class="info" id="rinfo">Click a number or an outside bet to place a chip. Numbers pay 35:1, outside bets 1:1.</div>
+  </section>
+
+  <section id="boxes" class="card hide">
+    <div class="row"><div><label>Bet</label><input id="bbet" type="number" min="1" value="10"></div></div>
+    <div class="info" id="binfo">Choose one of three boxes. Prizes range from <b>0x</b> to <b>10x</b>.</div>
+    <div class="boxes" id="boxrow"></div>
+  </section>
+
+  <section id="chicken" class="card hide">
+    <div class="row">
+      <div><label>Bet</label><input id="cbet" type="number" min="1" value="10"></div>
+      <div><label>Difficulty</label><select id="cdiff"><option value="easy">Easy</option><option value="medium">Medium</option><option value="hard">Hard</option></select></div>
+      <button class="btn" id="cstart" onclick="chStart()">Start</button>
+      <button class="btn ghost" id="cgo" onclick="chStep()" disabled>Go! 🐔</button>
+      <button class="btn alt" id="ccash" onclick="chCash()" disabled>Cash out</button>
+    </div>
+    <div class="info" id="cinfo">Cross the road lane by lane. Every lane adds to your multiplier, but traffic can hit you.</div>
+    <div class="road" id="road"></div>
+  </section>
+
+  <section id="admin" class="card hide">
+    <h3 style="margin-top:0">Admin · Manage balances</h3>
+    <table><thead><tr><th>User</th><th>Balance</th><th>Amount</th><th></th></tr></thead><tbody id="utable"></tbody></table>
+  </section>
+  <div class="foot">Virtual currency with no cash value. For entertainment only.</div>
+</main>
+<div id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s), P={easy:.08,medium:.15,hard:.25}, CMAX=12, RED=[1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36];
+let token=localStorage.token, me=null, mode='login';
+const fmt=n=>Math.floor(n).toLocaleString(), cm=(d,n)=>.97/Math.pow(1-P[d],n);
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('show');clearTimeout(e.t);e.t=setTimeout(()=>e.classList.remove('show'),2600)}
+async function api(path,body){
+  try{const r=await fetch('/api/'+path,{method:body?'POST':'GET',headers:{'Content-Type':'application/json',Authorization:token||''},body:body?JSON.stringify(body):undefined});
+    const d=await r.json(); if(!r.ok){toast(d.error||'Error'); if(r.status===401&&token)logout(); return null} return d}
+  catch(e){toast('Cannot reach server');return null}
+}
+const setBal=n=>{me.balance=n;$('#bal').textContent=fmt(n)};
+const num=id=>parseInt($(id).value)||0;
+
+// ---- auth ----
+function authMode(m){mode=m;$('#ab').textContent=m==='login'?'Log in':'Create account';$('#tl').className='btn'+(m==='login'?'':' ghost');$('#tr').className='btn'+(m==='register'?'':' ghost')}
+async function doAuth(){const d=await api(mode,{username:$('#u').value.trim(),password:$('#p').value});if(!d)return;token=localStorage.token=d.token;init()}
+async function logout(){if(token)await api('logout',{});localStorage.removeItem('token');token=null;$('#auth').classList.remove('hide')}
+async function init(){
+  if(!token)return; const d=await api('me'); if(!d)return; me=d;
+  $('#auth').classList.add('hide'); $('#who').textContent=d.username+(d.isAdmin?' · admin':''); setBal(d.balance);
+  const tabs=[['mines','💎 Mines'],['roulette','🎡 Roulette'],['boxes','🎁 Boxes'],['chicken','🐔 Chicken Road']]; if(d.isAdmin)tabs.push(['admin','🛠 Admin']);
+  $('#nav').innerHTML=tabs.map(t=>`<button data-t="${t[0]}" onclick="show('${t[0]}')">${t[1]}</button>`).join('')+`<button onclick="location='/trade.html'" style="border-color:var(--gold);color:var(--gold)">📈 Crypto Trading</button>`;
+  show(d.game?d.game.type:'mines'); if(d.game)resume(d.game);
+}
+function show(t){document.querySelectorAll('main section').forEach(s=>s.classList.toggle('hide',s.id!==t));
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.t===t)); if(t==='admin')loadUsers()}
+
+// ---- mines ----
+let mOn=false;
+$('#mcount').innerHTML=[...Array(24)].map((_,i)=>`<option ${i==2?'selected':''}>${i+1}</option>`).join('');
+function mGrid(){$('#mgrid').innerHTML=[...Array(25)].map((_,i)=>`<button class="tile" data-i="${i}" onclick="minesPick(${i})" ${mOn?'':'disabled'}></button>`).join('')}
+mGrid();
+function mState(on){mOn=on;$('#mstart').disabled=on;$('#mcash').disabled=true;document.querySelectorAll('.tile').forEach(t=>t.disabled=!on)}
+async function minesStart(){const d=await api('mines/start',{bet:num('#mbet'),mines:num('#mcount')});if(!d)return;setBal(d.balance);mState(true);mGrid();
+  $('#minfo').innerHTML=`Next tile pays <b>${d.next.toFixed(2)}x</b>`}
+async function minesPick(i){const d=await api('mines/reveal',{index:i});if(!d)return;const t=document.querySelector(`.tile[data-i="${i}"]`);
+  if(d.boom){t.textContent='💥';t.classList.add('bomb');mEnd(d.mines);setBal(d.balance);$('#minfo').innerHTML='💥 Boom! You lost your bet.';return}
+  t.textContent='💎';t.classList.add('gem');t.disabled=true;$('#mcash').disabled=false;
+  if(d.done){mEnd(d.mines);setBal(d.balance);$('#minfo').innerHTML=`Cleared the board! Won <b>${fmt(d.payout)}</b>`;return}
+  $('#minfo').innerHTML=`Current <b>${d.mult.toFixed(2)}x</b> · next ${d.next.toFixed(2)}x`}
+async function minesCash(){const d=await api('mines/cashout',{});if(!d)return;setBal(d.balance);mEnd(d.mines);$('#minfo').innerHTML=`Cashed out at <b>${d.mult.toFixed(2)}x</b> · won <b>${fmt(d.payout)}</b>`}
+function mEnd(mines){mState(false);mines.forEach(m=>{const t=document.querySelector(`.tile[data-i="${m}"]`);if(!t.classList.contains('bomb')){t.textContent='💣';t.classList.add('dim')}})}
+
+// ---- roulette ----
+let rbets=[];
+const nb=[`<div class="n zero" onclick="addBet('number',0)">0</div>`];
+for(let r=3;r>=1;r--)for(let c=0;c<12;c++){const n=c*3+r;nb.push(`<div class="n ${RED.includes(n)?'red':'black'}" onclick="addBet('number',${n})">${n}</div>`)}
+$('#rboard').innerHTML=nb.join('');
+$('#rout').innerHTML=[['red','🔴 Red'],['black','⚫ Black'],['even','Even'],['odd','Odd'],['low','1–18'],['high','19–36']].map(b=>`<button onclick="addBet('${b[0]}')">${b[1]}</button>`).join('');
+function addBet(type,value){const a=num('#rchip');if(a<1)return;const b=rbets.find(x=>x.type===type&&x.value===value);b?b.amount+=a:rbets.push({type,value,amount:a});drawBets()}
+function drawBets(){$('#rbets').innerHTML=rbets.map(b=>`<span>${b.type==='number'?'#'+b.value:b.type} · ${fmt(b.amount)}</span>`).join('')||'<span>No bets placed</span>'}
+drawBets();
+async function spin(){const d=await api('roulette/spin',{bets:rbets});if(!d)return;const w=$('#wheel');let i=0;
+  const iv=setInterval(()=>{w.textContent=Math.floor(Math.random()*37);if(++i>14){clearInterval(iv);w.textContent=d.number;w.style.color=d.number===0?'#2ecc71':RED.includes(d.number)?'#e74c3c':'#fff';
+    setBal(d.balance);const net=d.payout-d.total;$('#rinfo').innerHTML=`Result <b>${d.number}</b> · ${net>=0?'won':'lost'} <b>${fmt(Math.abs(net))}</b>`;rbets=[];drawBets()}},70)}
+
+// ---- boxes ----
+$('#boxrow').innerHTML=[0,1,2].map(i=>`<button class="box" data-i="${i}" onclick="openBox(${i})">🎁</button>`).join('');
+async function openBox(i){const d=await api('boxes/open',{pick:i,bet:num('#bbet')});if(!d)return;
+  document.querySelectorAll('.box').forEach((b,k)=>{b.innerHTML=`🎁<small>${d.boxes[k]}x</small>`;b.className='box '+(k===i?(d.boxes[k]>=1?'win':'pick lose'):'lose')});
+  setBal(d.balance);$('#binfo').innerHTML=`Your box held <b>${d.boxes[i]}x</b> · payout <b>${fmt(d.payout)}</b>. Pick again to play another round.`}
+
+// ---- chicken road ----
+let cDiff='easy',cSteps=0,cOn=false;
+function road(dead){$('#road').innerHTML=`<div class="lane ${cSteps===0&&cOn?'cur':''}">${cSteps===0?'🐔':'🏁'}<small>start</small></div>`+
+  [...Array(CMAX)].map((_,i)=>{const n=i+1,cls=dead&&n===cSteps?'dead':n<cSteps?'pass':n===cSteps?'cur':'';
+  return `<div class="lane ${cls}">${dead&&n===cSteps?'💥':n===cSteps?'🐔':n<cSteps?'✔':'🚗'}<small>${cm(cDiff,n).toFixed(2)}x</small></div>`}).join('')}
+function cState(on){cOn=on;$('#cstart').disabled=on;$('#cgo').disabled=!on;$('#ccash').disabled=!on||cSteps<1}
+road();
+async function chStart(){cDiff=$('#cdiff').value;const d=await api('chicken/start',{bet:num('#cbet'),diff:cDiff});if(!d)return;setBal(d.balance);cSteps=0;cState(true);road();$('#cinfo').innerHTML=`Next lane pays <b>${cm(cDiff,1).toFixed(2)}x</b>`}
+async function chStep(){const d=await api('chicken/step',{});if(!d)return;cSteps=d.steps;
+  if(d.dead){setBal(d.balance);cState(false);road(true);$('#cinfo').innerHTML='💥 The chicken got hit! You lost your bet.';return}
+  if(d.done){setBal(d.balance);cState(false);road();$('#cinfo').innerHTML=`Crossed the whole road! Won <b>${fmt(d.payout)}</b>`;return}
+  road();$('#ccash').disabled=false;$('#cinfo').innerHTML=`Current <b>${d.mult.toFixed(2)}x</b> · next ${cm(cDiff,cSteps+1).toFixed(2)}x`}
+async function chCash(){const d=await api('chicken/cashout',{});if(!d)return;setBal(d.balance);cState(false);$('#cinfo').innerHTML=`Cashed out at <b>${d.mult.toFixed(2)}x</b> · won <b>${fmt(d.payout)}</b>`}
+
+// ---- resume unfinished game after reload ----
+function resume(g){
+  if(g.type==='mines'){mState(true);mGrid();g.revealed.forEach(i=>{const t=document.querySelector(`.tile[data-i="${i}"]`);t.textContent='💎';t.classList.add('gem');t.disabled=true});$('#mcash').disabled=!g.revealed.length;$('#minfo').innerHTML=`Resumed · <b>${g.mult.toFixed(2)}x</b>`}
+  if(g.type==='chicken'){cDiff=g.diff;$('#cdiff').value=g.diff;cSteps=g.steps;cState(true);road();$('#cinfo').innerHTML=`Resumed · <b>${g.mult.toFixed(2)}x</b>`}
+}
+
+// ---- admin ----
+async function loadUsers(){const u=await api('admin/users');if(!u)return;
+  $('#utable').innerHTML=u.map(x=>`<tr><td>${x.username}${x.is_admin?' ★':''}</td><td>${fmt(x.balance)}</td>
+  <td><input type="number" id="a${x.id}" placeholder="amount"></td>
+  <td><button class="btn" onclick="adj(${x.id},'add')">Add</button> <button class="btn ghost" onclick="adj(${x.id},'set')">Set</button></td></tr>`).join('')}
+async function adj(id,m){const v=document.getElementById('a'+id).value;if(v==='')return toast('Enter an amount (negative removes)');
+  const d=await api('admin/balance',{id,amount:parseInt(v),mode:m});if(d){toast('Balance updated');loadUsers();const me2=await api('me');if(me2)setBal(me2.balance)}}
+
+init();
+</script></body></html>
