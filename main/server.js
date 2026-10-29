@@ -90,7 +90,7 @@ let tradeId = 0;
 const TRADES = [];
 
 // ---------- Luxury shop catalog ----------
-// Prices are in virtual coins. All brands and models are fictional.
+// Prices are in virtual coins. Real brand and place names are used for fun; items have no real-world value.
 // tier uses the same names as the case rarities: common, uncommon, rare, epic, legendary.
 
 const SHOP_SELL_RATE = 0.8;
@@ -106,63 +106,75 @@ const SHOP_CATEGORIES = [
 
 const SHOP_ITEMS = [
   // ----- Watches -----
-  { id: 'w01', category: 'watches', emoji: '⌚', tier: 'common',    price: 2500,      name: 'Pocket Quartz Classic',        desc: 'Reliable, slim and forgettable. Every collection starts somewhere.' },
-  { id: 'w02', category: 'watches', emoji: '⏱️', tier: 'common',    price: 12000,     name: 'Steel Deep Diver 300',          desc: 'Waterproof to 300 meters. You will never go deeper than the pool.' },
-  { id: 'w03', category: 'watches', emoji: '🧭', tier: 'uncommon',  price: 45000,     name: 'Aviator Chronograph',           desc: 'Three sub-dials, leather strap, and a pilot-approved attitude.' },
-  { id: 'w04', category: 'watches', emoji: '🕰️', tier: 'rare',      price: 150000,    name: 'Golden Dress Watch',            desc: '18-karat case, ultra-thin movement. Slides under a cuff like it owns the place.' },
-  { id: 'w05', category: 'watches', emoji: '⚙️', tier: 'epic',      price: 600000,    name: 'Skeleton Tourbillon',           desc: 'See the gears spin. A rotating cage cancels gravity, and your savings.' },
-  { id: 'w06', category: 'watches', emoji: '🌙', tier: 'epic',      price: 2400000,   name: 'Moonphase Grand Complication', desc: 'Perpetual calendar, moon phase and leap-year memory in one case.' },
-  { id: 'w07', category: 'watches', emoji: '💎', tier: 'legendary', price: 9500000,   name: 'Platinum Perpetual Diamond',    desc: 'Platinum case, baguette-cut diamond bezel. Quietly the loudest wrist in the room.' },
-  { id: 'w08', category: 'watches', emoji: '👑', tier: 'legendary', price: 40000000,  name: 'The Royal Minute Repeater',     desc: 'Chimes the time on tiny gongs. Only nine were ever made.' },
+  { id: 'w01', category: 'watches', emoji: '⌚', tier: 'common',    price: 2500,      name: "Casio F-91W",                          desc: "The iconic digital classic. Alarm, stopwatch, and nearly indestructible." },
+  { id: 'w02', category: 'watches', emoji: '⏱️', tier: 'common',    price: 12000,     name: "Seiko Prospex Diver",                  desc: "Serious dive watch with a rotating bezel and a reputation for toughness." },
+  { id: 'w03', category: 'watches', emoji: '🌙', tier: 'uncommon',  price: 45000,     name: "Omega Speedmaster Professional",       desc: "The Moonwatch. Worn on NASA missions, loved by collectors." },
+  { id: 'w04', category: 'watches', emoji: '🕰️', tier: 'rare',      price: 150000,    name: "Rolex Submariner Date",                desc: "The most recognizable dive watch on earth. Steel, ceramic bezel, instant status." },
+  { id: 'w05', category: 'watches', emoji: '⚙️', tier: 'epic',      price: 600000,    name: "Audemars Piguet Royal Oak",            desc: "Octagonal bezel, integrated bracelet, and a design that changed watchmaking." },
+  { id: 'w06', category: 'watches', emoji: '🌊', tier: 'epic',      price: 2400000,   name: "Patek Philippe Nautilus 5711",         desc: "Famously hard to get. Collectors queue for years." },
+  { id: 'w07', category: 'watches', emoji: '💎', tier: 'legendary', price: 9500000,   name: "Richard Mille RM 056 Sapphire",        desc: "Case carved from a block of sapphire crystal. Wearable art that costs a fortune." },
+  { id: 'w08', category: 'watches', emoji: '👑', tier: 'legendary', price: 40000000,  name: "Patek Philippe Henry Graves Supercomplication", desc: "The legendary 1932 pocket watch with 24 complications. Auction record holder in its day." },
 
   // ----- Cars -----
-  { id: 'c01', category: 'cars', emoji: '🚗', tier: 'common',    price: 18000,      name: 'City Hatchback',                 desc: 'Fits any parking space. Sips fuel. Gets you there.' },
-  { id: 'c02', category: 'cars', emoji: '🚙', tier: 'common',    price: 45000,      name: 'Family Adventure SUV',           desc: 'Roof rack, third row, and a trunk that swallows luggage.' },
-  { id: 'c03', category: 'cars', emoji: '🚘', tier: 'uncommon',  price: 120000,     name: 'Retro Roadster',                 desc: 'Convertible top, wire wheels, and a sunset soundtrack.' },
-  { id: 'c04', category: 'cars', emoji: '⚡', tier: 'rare',      price: 250000,     name: 'Volt GT Electric Sedan',         desc: '0 to 100 in 2.9 seconds, in complete silence.' },
-  { id: 'c05', category: 'cars', emoji: '🏁', tier: 'rare',      price: 750000,     name: 'Circuit RS Track Coupe',         desc: 'Street-legal on paper. Happiest with a checkered flag in front of it.' },
-  { id: 'c06', category: 'cars', emoji: '🏎️', tier: 'epic',      price: 2800000,    name: 'Veloce V12 Supercar',            desc: 'Naturally aspirated V12 that you can hear from the next town.' },
-  { id: 'c07', category: 'cars', emoji: '🚀', tier: 'legendary', price: 12000000,   name: 'Apex One Hypercar',              desc: '1,600 horsepower, carbon monocoque, and a waiting list of four years.' },
-  { id: 'c08', category: 'cars', emoji: '🏆', tier: 'legendary', price: 30000000,   name: '1957 Grand Prix Winner',         desc: 'A real race-winning car from the golden era, now a museum-grade classic.' },
-  { id: 'c09', category: 'cars', emoji: '🛡️', tier: 'legendary', price: 60000000,   name: 'Monarch Armored Limousine',      desc: 'Bulletproof glass, champagne fridge, and a privacy partition.' },
+  { id: 'c01', category: 'cars', emoji: '🚗', tier: 'common',    price: 18000,      name: "Honda Civic",                      desc: "Reliable, efficient and surprisingly fun to drive." },
+  { id: 'c02', category: 'cars', emoji: '🐎', tier: 'common',    price: 45000,      name: "Ford Mustang GT",                  desc: "5.0L V8 muscle with an unmistakable rumble." },
+  { id: 'c03', category: 'cars', emoji: '🚘', tier: 'uncommon',  price: 120000,     name: "Porsche 911 Carrera",              desc: "The everyday sports car. Rear engine, timeless shape." },
+  { id: 'c04', category: 'cars', emoji: '⚡', tier: 'rare',      price: 250000,     name: "Tesla Model S Plaid",              desc: "Over 1,000 horsepower and a sub-2-second 0 to 60 mph launch." },
+  { id: 'c05', category: 'cars', emoji: '🛻', tier: 'rare',      price: 400000,     name: "Mercedes-AMG G 63",                desc: "A boxy off-roader with a hand-built twin-turbo V8 and a very loud personality." },
+  { id: 'c06', category: 'cars', emoji: '🐂', tier: 'epic',      price: 750000,     name: "Lamborghini Huracán",              desc: "V10 power, scissor-sharp lines, and pure Italian theatre." },
+  { id: 'c07', category: 'cars', emoji: '🏁', tier: 'epic',      price: 1400000,    name: "McLaren 720S",                     desc: "Carbon-fiber tub, 710 horsepower, and a Formula 1 attitude." },
+  { id: 'c08', category: 'cars', emoji: '🏎️', tier: 'epic',      price: 2800000,    name: "Ferrari 812 Superfast",            desc: "Front-engine V12 grand tourer, one of the last great naturally aspirated Ferraris." },
+  { id: 'c09', category: 'cars', emoji: '🌪️', tier: 'legendary', price: 5000000,    name: "Pagani Huayra",                    desc: "Hand-built Italian hypercar where every bolt is a work of art." },
+  { id: 'c10', category: 'cars', emoji: '🚀', tier: 'legendary', price: 12000000,   name: "Bugatti Chiron",                   desc: "8.0L quad-turbo W16 with 1,500 horsepower and a top speed over 260 mph." },
+  { id: 'c11', category: 'cars', emoji: '🏆', tier: 'legendary', price: 30000000,   name: "1962 Ferrari 250 GTO",             desc: "Perhaps the most valuable classic car ever. Only 36 were built." },
+  { id: 'c12', category: 'cars', emoji: '🛡️', tier: 'legendary', price: 60000000,   name: "Rolls-Royce Boat Tail",            desc: "A coachbuilt, one-of-three masterpiece with a hidden picnic set in the rear." },
 
   // ----- Real Estate -----
-  { id: 'r01', category: 'realestate', emoji: '🏢', tier: 'common',    price: 40000,        name: 'Downtown Studio Apartment',   desc: 'One room, big window, zero lawn to mow.' },
-  { id: 'r02', category: 'realestate', emoji: '🛖', tier: 'uncommon',  price: 350000,       name: 'Lakeside Cabin',              desc: 'Pine walls, wood stove, private dock.' },
-  { id: 'r03', category: 'realestate', emoji: '🏘️', tier: 'uncommon',  price: 180000,       name: 'Suburban Townhouse',          desc: 'Two floors, a garage and a friendly neighborhood.' },
-  { id: 'r04', category: 'realestate', emoji: '🏡', tier: 'rare',      price: 450000,       name: 'Family Home with Garden',     desc: 'Four bedrooms, a porch swing, and an apple tree.' },
-  { id: 'r05', category: 'realestate', emoji: '🌆', tier: 'epic',      price: 2000000,      name: 'Skyline Penthouse',           desc: 'Top floor, wraparound terrace, the whole city at your feet.' },
-  { id: 'r06', category: 'realestate', emoji: '🏖️', tier: 'epic',      price: 5500000,      name: 'Oceanfront Beach Villa',      desc: 'Infinity pool that merges with the horizon.' },
-  { id: 'r07', category: 'realestate', emoji: '🏔️', tier: 'epic',      price: 8000000,      name: 'Alpine Ski Chalet',           desc: 'Ski-in, ski-out, with a hot tub on the balcony.' },
-  { id: 'r08', category: 'realestate', emoji: '🏬', tier: 'legendary', price: 60000000,     name: 'Skyline Tower (Entire Building)', desc: '48 floors of rentable ego. Your name is on the lobby wall.' },
-  { id: 'r09', category: 'realestate', emoji: '🏝️', tier: 'legendary', price: 150000000,    name: 'Private Tropical Island',     desc: 'White sand, a lagoon, and nobody else for 20 miles.' },
-  { id: 'r10', category: 'realestate', emoji: '🏰', tier: 'legendary', price: 300000000,    name: 'Hilltop Medieval Castle',     desc: 'Towers, a moat, a drawbridge, and a very large heating bill.' },
-  { id: 'r11', category: 'realestate', emoji: '🛰️', tier: 'legendary', price: 1000000000,   name: 'Orbital Resort Suite',        desc: 'The ultimate view: 16 sunrises a day.' },
+  { id: 'r01', category: 'realestate', emoji: '🏢', tier: 'common',    price: 40000,        name: "Studio Apartment in Brooklyn, New York",    desc: "One room, exposed brick, and a subway stop on the corner." },
+  { id: 'r02', category: 'realestate', emoji: '🏘️', tier: 'uncommon',  price: 180000,       name: "Townhouse in Austin, Texas",                desc: "Two floors, a garage and live music every night downtown." },
+  { id: 'r03', category: 'realestate', emoji: '🛖', tier: 'uncommon',  price: 350000,       name: "Lakeside Cabin at Lake Tahoe",              desc: "Pine walls, wood stove and a private dock on the water." },
+  { id: 'r04', category: 'realestate', emoji: '🏡', tier: 'rare',      price: 450000,       name: "Family Home in Portland, Oregon",           desc: "Four bedrooms, a big yard and a front porch for rainy evenings." },
+  { id: 'r05', category: 'realestate', emoji: '🗼', tier: 'rare',      price: 600000,       name: "Apartment in Shibuya, Tokyo",               desc: "Compact, smart and a short walk from the famous crossing." },
+  { id: 'r06', category: 'realestate', emoji: '🌆', tier: 'epic',      price: 2000000,      name: "Penthouse in Manhattan, New York",          desc: "Top floor, wraparound terrace and Central Park below you." },
+  { id: 'r07', category: 'realestate', emoji: '🏖️', tier: 'epic',      price: 5500000,      name: "Beach Villa in Malibu, California",         desc: "Pacific views, a private deck and sunsets that never get old." },
+  { id: 'r08', category: 'realestate', emoji: '🏔️', tier: 'epic',      price: 8000000,      name: "Ski Chalet in Aspen, Colorado",             desc: "Ski-in, ski-out, with a hot tub looking at the slopes." },
+  { id: 'r09', category: 'realestate', emoji: '🌅', tier: 'epic',      price: 18000000,     name: "Lakefront Villa on Lake Como, Italy",       desc: "Terraced gardens, a boathouse and mountains reflected in the water." },
+  { id: 'r10', category: 'realestate', emoji: '🌴', tier: 'legendary', price: 35000000,     name: "Mansion in Beverly Hills, California",      desc: "Gated estate with a pool, a cinema room and a very long driveway." },
+  { id: 'r11', category: 'realestate', emoji: '🏬', tier: 'legendary', price: 60000000,     name: "Entire Skyscraper in Dubai",                desc: "Dozens of floors of rentable glass and a skyline all your own." },
+  { id: 'r12', category: 'realestate', emoji: '🏝️', tier: 'legendary', price: 150000000,    name: "Private Island in the Maldives",            desc: "White sand, a coral lagoon and nobody else for miles." },
+  { id: 'r13', category: 'realestate', emoji: '🏰', tier: 'legendary', price: 300000000,    name: "Highland Castle in Scotland",               desc: "Towers, a loch view, and a heating bill you do not want to see." },
+  { id: 'r14', category: 'realestate', emoji: '🛰️', tier: 'legendary', price: 1000000000,   name: "Luxury Suite on the International Space Station", desc: "The ultimate view: sixteen sunrises every day." },
 
   // ----- Yachts & Jets -----
-  { id: 'y01', category: 'yachts', emoji: '🛶', tier: 'common',    price: 15000,       name: 'Weekend Jet Ski',        desc: 'Fast, wet and a little reckless.' },
-  { id: 'y02', category: 'yachts', emoji: '⛵', tier: 'uncommon',  price: 80000,       name: 'Coastal Sailboat',       desc: 'Wind-powered and surprisingly cozy below deck.' },
-  { id: 'y03', category: 'yachts', emoji: '🚤', tier: 'rare',      price: 400000,      name: 'Sport Speedboat',        desc: 'Twin engines and a wake that tells everyone you arrived.' },
-  { id: 'y04', category: 'yachts', emoji: '🚁', tier: 'epic',      price: 3000000,     name: 'Executive Helicopter',   desc: 'Skip traffic entirely. Land on your own roof.' },
-  { id: 'y05', category: 'yachts', emoji: '🛥️', tier: 'epic',      price: 6000000,     name: 'Motor Yacht Aurora',     desc: 'Four cabins, a sun deck, and a captain called Marco.' },
-  { id: 'y06', category: 'yachts', emoji: '✈️', tier: 'legendary', price: 35000000,    name: 'Private Jet Falcon X',   desc: 'Crosses oceans nonstop with a full-size bed on board.' },
-  { id: 'y07', category: 'yachts', emoji: '🚢', tier: 'legendary', price: 120000000,   name: 'Superyacht Leviathan',   desc: '120 meters, a helipad, a cinema and a submarine in the garage.' },
+  { id: 'y01', category: 'yachts', emoji: '🛶', tier: 'common',    price: 15000,       name: "Sea-Doo GTX Jet Ski",             desc: "Fast, wet and a little bit reckless." },
+  { id: 'y02', category: 'yachts', emoji: '⛵', tier: 'uncommon',  price: 80000,       name: "Beneteau Oceanis Sailboat",        desc: "Wind-powered and surprisingly cozy below deck." },
+  { id: 'y03', category: 'yachts', emoji: '🚤', tier: 'rare',      price: 400000,      name: "Riva Aquariva Speedboat",          desc: "Mahogany-style elegance from the Italian lake boat legend." },
+  { id: 'y04', category: 'yachts', emoji: '🚁', tier: 'epic',      price: 3000000,     name: "Airbus H145 Helicopter",           desc: "Skip traffic completely. Land on your own roof." },
+  { id: 'y05', category: 'yachts', emoji: '🛥️', tier: 'epic',      price: 6000000,     name: "Sunseeker 76 Yacht",               desc: "Four cabins, a flybridge and a sun deck made for the Mediterranean." },
+  { id: 'y06', category: 'yachts', emoji: '🛩️', tier: 'epic',      price: 12000000,    name: "Cessna Citation Latitude",         desc: "A comfortable midsize business jet for hopping between cities." },
+  { id: 'y07', category: 'yachts', emoji: '✈️', tier: 'legendary', price: 35000000,    name: "Gulfstream G650 Private Jet",      desc: "Crosses oceans nonstop at close to the speed of sound." },
+  { id: 'y08', category: 'yachts', emoji: '🚢', tier: 'legendary', price: 120000000,   name: "Lürssen 120m Superyacht",          desc: "German-built giant with a helipad, a pool and a crew of dozens." },
+  { id: 'y09', category: 'yachts', emoji: '🛫', tier: 'legendary', price: 400000000,   name: "Airbus A380 Private Airliner",     desc: "The largest passenger aircraft in the world, refitted as a flying palace." },
 
   // ----- Jewelry -----
-  { id: 'j01', category: 'jewelry', emoji: '💍', tier: 'common',    price: 800,        name: 'Sterling Silver Ring',        desc: 'Simple, clean, polished.' },
-  { id: 'j02', category: 'jewelry', emoji: '📿', tier: 'uncommon',  price: 20000,      name: 'Pearl Necklace',              desc: 'Hand-knotted South Sea pearls.' },
-  { id: 'j03', category: 'jewelry', emoji: '⛓️', tier: 'rare',      price: 75000,      name: 'Heavy Gold Chain',            desc: '24-karat links that mean business.' },
-  { id: 'j04', category: 'jewelry', emoji: '💚', tier: 'epic',      price: 400000,     name: 'Emerald Drop Earrings',       desc: 'Deep green stones with an impossible shine.' },
-  { id: 'j05', category: 'jewelry', emoji: '👸', tier: 'legendary', price: 5000000,    name: 'Diamond Tiara',               desc: 'More than 600 diamonds on a platinum band.' },
-  { id: 'j06', category: 'jewelry', emoji: '🔷', tier: 'legendary', price: 50000000,   name: 'The Midnight Blue Diamond',   desc: '45 carats of rare blue. Its legend is older than any bank.' },
+  { id: 'j01', category: 'jewelry', emoji: '💍', tier: 'common',    price: 800,        name: "Tiffany & Co. Sterling Silver Ring",     desc: "Simple, clean and in the famous blue box." },
+  { id: 'j02', category: 'jewelry', emoji: '📿', tier: 'uncommon',  price: 20000,      name: "Mikimoto Pearl Necklace",                desc: "Cultured pearls from the family that invented them." },
+  { id: 'j03', category: 'jewelry', emoji: '⛓️', tier: 'rare',      price: 75000,      name: "Cartier Love Bracelet in 18K Gold",      desc: "Locks on with its own screwdriver. A Cartier icon since 1969." },
+  { id: 'j04', category: 'jewelry', emoji: '💚', tier: 'epic',      price: 400000,     name: "Van Cleef & Arpels Emerald Earrings",    desc: "Deep green emeralds in the style of the Place Vendôme masters." },
+  { id: 'j05', category: 'jewelry', emoji: '🌸', tier: 'epic',      price: 15000000,   name: "Graff Pink Diamond Ring",                desc: "A rare fancy-vivid pink stone from the diamond house of London." },
+  { id: 'j06', category: 'jewelry', emoji: '👸', tier: 'legendary', price: 5000000,    name: "Harry Winston Diamond Necklace",         desc: "The \"King of Diamonds\" jeweler. Hundreds of carats of fire." },
+  { id: 'j07', category: 'jewelry', emoji: '🔷', tier: 'legendary', price: 50000000,   name: "The Hope Diamond",                       desc: "45.52 carats of deep blue with a legend as famous as the stone." },
 
   // ----- Art & Collectibles -----
-  { id: 'a01', category: 'art', emoji: '🖼️', tier: 'common',    price: 3000,       name: 'Signed Limited Print',        desc: 'Numbered 12 of 200 and framed in oak.' },
-  { id: 'a02', category: 'art', emoji: '🗿', tier: 'uncommon',  price: 90000,      name: 'Bronze Garden Sculpture',     desc: 'A lifetime of weather will only make it look better.' },
-  { id: 'a03', category: 'art', emoji: '📚', tier: 'rare',      price: 250000,     name: 'Mint First-Issue Comic',      desc: 'Graded 9.8 and sealed in a protective case.' },
-  { id: 'a04', category: 'art', emoji: '🍷', tier: 'epic',      price: 1200000,    name: 'Vintage Wine Cellar',         desc: '2,000 bottles across six legendary vintages.' },
-  { id: 'a05', category: 'art', emoji: '🎨', tier: 'legendary', price: 25000000,   name: 'Old Master Oil Painting',     desc: 'Four centuries old, cracked varnish and priceless stare.' },
-  { id: 'a06', category: 'art', emoji: '🦖', tier: 'legendary', price: 90000000,   name: 'Fossil T-Rex Skeleton',       desc: 'Sixty-seven million years old. Fits in a ballroom.' }
+  { id: 'a01', category: 'art', emoji: '🎬', tier: 'common',    price: 3000,       name: "Original Star Wars (1977) Movie Poster",   desc: "An original one-sheet from opening year, folded as it came from the cinema." },
+  { id: 'a02', category: 'art', emoji: '🗿', tier: 'uncommon',  price: 90000,      name: "Rodin's \"The Thinker\" Bronze Cast",       desc: "A cast of the most famous sculpture of a man deep in thought." },
+  { id: 'a03', category: 'art', emoji: '⚡', tier: 'rare',      price: 250000,     name: "Pokémon 1st Edition Charizard Card",       desc: "A graded base-set holo that grown adults still dream about." },
+  { id: 'a04', category: 'art', emoji: '📚', tier: 'rare',      price: 400000,     name: "Action Comics #1 (1938)",                  desc: "The first appearance of Superman. The holy grail of comics." },
+  { id: 'a05', category: 'art', emoji: '🍷', tier: 'epic',      price: 1200000,    name: "Romanée-Conti Wine Cellar",                desc: "Bottles from the most prestigious vineyard in Burgundy." },
+  { id: 'a06', category: 'art', emoji: '⚾', tier: 'epic',      price: 5000000,    name: "1952 Topps Mickey Mantle Baseball Card",   desc: "The most famous baseball card ever printed." },
+  { id: 'a07', category: 'art', emoji: '🎨', tier: 'legendary', price: 25000000,   name: "Claude Monet \"Water Lilies\"",            desc: "Impressionist calm in oil, from the master of the garden at Giverny." },
+  { id: 'a08', category: 'art', emoji: '🦖', tier: 'legendary', price: 90000000,   name: "T. rex Skeleton \"Stan\"",                 desc: "One of the most complete T. rex fossils ever found. Sold at auction in 2020." },
+  { id: 'a09', category: 'art', emoji: '🖌️', tier: 'legendary', price: 450000000,  name: "Leonardo da Vinci \"Salvator Mundi\"",     desc: "The painting that holds the record for the highest price ever paid for artwork." }
 ];
 
 const SHOP_BY_ID = new Map(SHOP_ITEMS.map(i => [i.id, i]));
@@ -234,6 +246,18 @@ async function initDatabase() {
       purchased_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       PRIMARY KEY (user_id, item_id)
     )
+  `);
+
+  // Auto-sell now works on profit/loss in coins instead of coin price.
+  await pool.query(`
+    ALTER TABLE auto_orders ADD COLUMN IF NOT EXISTS profit_target DOUBLE PRECISION
+  `);
+  await pool.query(`
+    ALTER TABLE auto_orders ADD COLUMN IF NOT EXISTS loss_limit DOUBLE PRECISION
+  `);
+  // Old price-based orders can't be converted safely, so remove them.
+  await pool.query(`
+    DELETE FROM auto_orders WHERE profit_target IS NULL AND loss_limit IS NULL
   `);
 
   await pool.query(`
@@ -406,6 +430,8 @@ app.get('/', (req, res) =>
 app.get(['/trade', '/trade.html'], (req, res) =>
   res.sendFile(path.join(__dirname, 'trade.html'))
 );
+
+app.get('/health', (req, res) => res.json({ ok: true, tick: tickN }));
 
 // ---------- Accounts ----------
 
@@ -1338,71 +1364,131 @@ async function saveTrade(userId, sym, side, qty, price) {
   `, [userId, sym, side, qty, price]);
 }
 
-async function processAutoSells() {
-  const result = await pool.query('SELECT * FROM auto_orders');
+// Profit/loss you would actually realize if you sold right now (after the fee).
+const realizablePnl = (qty, cost, price) =>
+  Math.floor(qty * price * (1 - FEE)) - cost;
 
-  for (const order of result.rows) {
-    const sym = order.symbol;
-    const c = COINS[sym];
-    if (!c) continue;
+let autoSellRunning = false;
 
-    const target = order.take_profit == null ? null : Number(order.take_profit);
-    const stop = order.stop_loss == null ? null : Number(order.stop_loss);
+async function runAutoSell(order, coin) {
+  const sym = order.symbol;
 
-    const targetHit = target != null && c.price >= target;
-    const stopHit = stop != null && c.price <= stop;
-    if (!targetHit && !stopHit) continue;
+  const sold = await transaction(async client => {
+    // Re-read everything under lock so a manual trade can't race us.
+    const orderRes = await client.query(`
+      SELECT profit_target, loss_limit FROM auto_orders
+      WHERE user_id=$1 AND symbol=$2 FOR UPDATE
+    `, [order.user_id, sym]);
+    const o = orderRes.rows[0];
+    if (!o) return null;
 
-    await transaction(async client => {
-      const holdingResult = await client.query(`
-        SELECT quantity FROM holdings
-        WHERE user_id=$1 AND symbol=$2
-        FOR UPDATE
-      `, [order.user_id, sym]);
+    const holdRes = await client.query(`
+      SELECT quantity, cost_basis FROM holdings
+      WHERE user_id=$1 AND symbol=$2 FOR UPDATE
+    `, [order.user_id, sym]);
+    const h = holdRes.rows[0];
 
-      const h = holdingResult.rows[0];
-
-      if (!h || Number(h.quantity) <= 0) {
-        await client.query(
-          'DELETE FROM auto_orders WHERE user_id=$1 AND symbol=$2',
-          [order.user_id, sym]
-        );
-        return;
-      }
-
-      const qty = Number(h.quantity);
-      const proceeds = Math.max(0, Math.floor(qty * c.price * (1 - FEE)));
-
-      await client.query(
-        'UPDATE users SET balance=balance+$1 WHERE id=$2',
-        [proceeds, order.user_id]
-      );
-      await client.query(
-        'DELETE FROM holdings WHERE user_id=$1 AND symbol=$2',
-        [order.user_id, sym]
-      );
+    if (!h || Number(h.quantity) <= 0) {
       await client.query(
         'DELETE FROM auto_orders WHERE user_id=$1 AND symbol=$2',
         [order.user_id, sym]
       );
-      await client.query(`
-        INSERT INTO trades(user_id,symbol,side,quantity,price)
-        VALUES($1,$2,'sell',$3,$4)
-      `, [order.user_id, sym, qty, c.price]);
+      return null;
+    }
 
-      const userResult = await client.query(
-        'SELECT username FROM users WHERE id=$1',
-        [order.user_id]
-      );
+    const price = coin.price;
+    const qty = Number(h.quantity);
+    const cost = Number(h.cost_basis);
+    const pnl = realizablePnl(qty, cost, price);
 
-      if (userResult.rows[0]) {
-        logTrade(userResult.rows[0].username, sym, 'sell', proceeds, qty, c.price);
-      }
-    });
+    const hitProfit = o.profit_target != null && pnl >= Number(o.profit_target);
+    const hitLoss = o.loss_limit != null && pnl <= -Number(o.loss_limit);
+    if (!hitProfit && !hitLoss) return null;
+
+    const proceeds = Math.max(0, Math.floor(qty * price * (1 - FEE)));
+
+    await client.query(
+      'UPDATE users SET balance=balance+$1 WHERE id=$2',
+      [proceeds, order.user_id]
+    );
+    await client.query(
+      'DELETE FROM holdings WHERE user_id=$1 AND symbol=$2',
+      [order.user_id, sym]
+    );
+    await client.query(
+      'DELETE FROM auto_orders WHERE user_id=$1 AND symbol=$2',
+      [order.user_id, sym]
+    );
+    await client.query(`
+      INSERT INTO trades(user_id,symbol,side,quantity,price)
+      VALUES($1,$2,'sell',$3,$4)
+    `, [order.user_id, sym, qty, price]);
+
+    const userRes = await client.query(
+      'SELECT username FROM users WHERE id=$1',
+      [order.user_id]
+    );
+
+    return {
+      username: userRes.rows[0] ? userRes.rows[0].username : null,
+      proceeds, qty, price, pnl, reason: hitProfit ? 'profit' : 'loss'
+    };
+  });
+
+  if (sold && sold.username) {
+    logTrade(sold.username, sym, 'sell', sold.proceeds, sold.qty, sold.price);
+    console.log(
+      `Auto-sell (${sold.reason}) ${sold.username} ${sym} ` +
+      `P&L ${sold.pnl} -> +${sold.proceeds} coins`
+    );
   }
 }
 
-function tick() {
+// Runs on the server every second, so it works whether or not anyone is online.
+async function processAutoSells() {
+  if (autoSellRunning) return;
+  autoSellRunning = true;
+
+  try {
+    const result = await pool.query(`
+      SELECT o.user_id, o.symbol, o.profit_target, o.loss_limit,
+             h.quantity, h.cost_basis
+      FROM auto_orders o
+      LEFT JOIN holdings h
+        ON h.user_id=o.user_id AND h.symbol=o.symbol
+    `);
+
+    for (const order of result.rows) {
+      const coin = COINS[order.symbol];
+      if (!coin) continue;
+
+      try {
+        if (order.quantity == null || Number(order.quantity) <= 0) {
+          // Holding is gone, so clean up the stale order.
+          await runAutoSell(order, coin);
+          continue;
+        }
+
+        const pnl = realizablePnl(
+          Number(order.quantity), Number(order.cost_basis), coin.price
+        );
+
+        const hitProfit = order.profit_target != null &&
+          pnl >= Number(order.profit_target);
+        const hitLoss = order.loss_limit != null &&
+          pnl <= -Number(order.loss_limit);
+
+        if (hitProfit || hitLoss) await runAutoSell(order, coin);
+      } catch (err) {
+        console.error('Auto-sell failed for', order.user_id, order.symbol, err);
+      }
+    }
+  } finally {
+    autoSellRunning = false;
+  }
+}
+
+function tick(processOrders = true) {
   tickN++;
 
   for (const c of Object.values(COINS)) {
@@ -1429,7 +1515,9 @@ function tick() {
     if (c.hist.length > HIST) c.hist.shift();
   }
 
-  processAutoSells().catch(err => console.error('Auto-sell error:', err));
+  if (processOrders) {
+    processAutoSells().catch(err => console.error('Auto-sell error:', err));
+  }
 }
 
 async function persistMarket() {
@@ -1451,7 +1539,7 @@ app.get('/api/market', auth, route(async (req, res) => {
   `, [req.user.id]);
 
   const ordersResult = await pool.query(`
-    SELECT symbol AS sym, take_profit AS target, stop_loss AS stop
+    SELECT symbol AS sym, profit_target AS target, loss_limit AS stop
     FROM auto_orders WHERE user_id=$1
   `, [req.user.id]);
 
@@ -1493,11 +1581,18 @@ app.get('/api/market', auth, route(async (req, res) => {
       qty: Number(h.qty),
       cost: Number(h.cost)
     })),
-    autoOrders: ordersResult.rows.map(o => ({
-      ...o,
-      target: o.target == null ? null : Number(o.target),
-      stop: o.stop == null ? null : Number(o.stop)
-    }))
+    autoOrders: ordersResult.rows.map(o => {
+      const hold = holdingsResult.rows.find(h => h.sym === o.sym);
+      const pnl = hold && COINS[o.sym]
+        ? realizablePnl(Number(hold.qty), Number(hold.cost), COINS[o.sym].price)
+        : 0;
+      return {
+        ...o,
+        target: o.target == null ? null : Number(o.target),
+        stop: o.stop == null ? null : Number(o.stop),
+        pnl
+      };
+    })
   });
 }));
 
@@ -1617,6 +1712,9 @@ app.post('/api/trade', auth, route(async (req, res) => {
 }));
 
 // ---------- Auto-sell settings ----------
+// "target" = sell once your profit reaches this many coins (e.g. 300000).
+// "stop"   = sell once your loss reaches this many coins (optional).
+// (profit / loss are accepted as aliases.) Profit is measured after the fee.
 
 app.post('/api/auto-sell', auth, route(async (req, res) => {
   const { sym } = req.body || {};
@@ -1630,26 +1728,23 @@ app.post('/api/auto-sell', auth, route(async (req, res) => {
     return res.json({ msg: `Auto-sell cancelled for ${sym}` });
   }
 
-  const parsePrice = value => {
+  const parseCoins = value => {
     if (value === '' || value == null) return null;
     const n = Number(value);
-    return Number.isFinite(n) && n > 0 ? n : NaN;
+    return Number.isFinite(n) && n > 0 && n <= 1e15 ? n : NaN;
   };
 
-  const target = parsePrice(req.body.target);
-  const stop = parsePrice(req.body.stop);
+  const target = parseCoins(req.body.target ?? req.body.profit);
+  const stop = parseCoins(req.body.stop ?? req.body.loss);
 
   if (Number.isNaN(target) || Number.isNaN(stop))
-    return fail(res, 'Prices must be positive numbers');
+    return fail(res, 'Profit and loss limits must be positive numbers');
 
   if (target == null && stop == null)
-    return fail(res, 'Enter a target price or stop-loss price');
-
-  if (target != null && stop != null && target <= stop)
-    return fail(res, 'Target price must be higher than stop-loss');
+    return fail(res, 'Enter a profit target or a loss limit');
 
   const holding = await pool.query(`
-    SELECT quantity FROM holdings
+    SELECT quantity, cost_basis FROM holdings
     WHERE user_id=$1 AND symbol=$2
   `, [req.user.id, sym]);
 
@@ -1657,14 +1752,18 @@ app.post('/api/auto-sell', auth, route(async (req, res) => {
     return fail(res, 'Buy this coin before setting auto-sell');
 
   await pool.query(`
-    INSERT INTO auto_orders(user_id,symbol,take_profit,stop_loss)
+    INSERT INTO auto_orders(user_id,symbol,profit_target,loss_limit)
     VALUES($1,$2,$3,$4)
     ON CONFLICT(user_id,symbol) DO UPDATE SET
-      take_profit=EXCLUDED.take_profit,
-      stop_loss=EXCLUDED.stop_loss
+      profit_target=EXCLUDED.profit_target,
+      loss_limit=EXCLUDED.loss_limit
   `, [req.user.id, sym, target, stop]);
 
-  res.json({ msg: `Auto-sell saved for ${sym}` });
+  const parts = [];
+  if (target != null) parts.push(`profit reaches ${Math.floor(target).toLocaleString()}`);
+  if (stop != null) parts.push(`loss reaches ${Math.floor(stop).toLocaleString()}`);
+
+  res.json({ msg: `Auto-sell on for ${sym}: sells when ${parts.join(' or ')}` });
 }));
 
 // ---------- Luxury shop ----------
@@ -1779,13 +1878,23 @@ app.use((err, req, res, next) => {
 async function start() {
   await initDatabase();
 
-  for (let i = 0; i < HIST; i++) tick();
+  // Warm-up ticks only build price history; they must never trigger sells.
+  for (let i = 0; i < HIST; i++) tick(false);
 
-  setInterval(tick, 1000);
+  setInterval(() => tick(), 1000);
 
   setInterval(() => {
     persistMarket().catch(err => console.error('Market save error:', err));
   }, 5000);
+
+  // Render's free tier sleeps after ~15 min without traffic, which pauses the
+  // market and auto-sell. Pinging ourselves keeps the server awake.
+  const selfUrl = process.env.RENDER_EXTERNAL_URL;
+  if (selfUrl && typeof fetch === 'function') {
+    setInterval(() => {
+      fetch(`${selfUrl}/health`).catch(() => {});
+    }, 10 * 60 * 1000);
+  }
 
   const PORT = process.env.PORT || 3000;
   app.listen(PORT, () => console.log(`Casino running on port ${PORT}`));
