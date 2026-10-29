@@ -145,6 +145,45 @@ td input{width:110px}
 .announcement-admin .announcement-edit-row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
 .announcement-admin input{width:auto;flex:1;min-width:180px}
 .announcement-help{font-size:12px;color:var(--mut);margin:7px 0 0}
+/* Luxury shop */
+.shop-head{display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+.shop-head h2{margin:0;font-size:26px}
+.shop-head p{margin:5px 0 0;color:var(--mut)}
+.shop-stats{display:flex;gap:10px;flex-wrap:wrap}
+.shop-stat{background:#0d1220;border:1px solid var(--line);border-radius:12px;padding:10px 16px;min-width:150px}
+.shop-stat small{display:block;color:var(--mut);font-size:11px}
+.shop-stat strong{color:var(--gold);font-size:18px;overflow-wrap:anywhere}
+.shop-cats{display:flex;gap:8px;overflow-x:auto;padding:2px 0 12px;margin-bottom:6px;scrollbar-width:thin}
+.shop-cat{flex:0 0 auto;background:#0d1220;color:var(--mut);border:1px solid var(--line);padding:9px 15px;border-radius:99px;cursor:pointer;font-weight:600;font-size:14px;white-space:nowrap}
+.shop-cat .cnt{margin-left:6px;font-size:12px;opacity:.75}
+.shop-cat.on{background:var(--gold);border-color:var(--gold);color:#1a1300}
+.shop-cat.collection{border-color:#4b4261}
+.shop-toolbar{display:flex;justify-content:space-between;align-items:end;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.shop-toolbar select{width:190px}
+.shop-count{color:var(--mut);font-size:13px}
+.shop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.shop-item{display:flex;flex-direction:column;background:linear-gradient(180deg,#1a2138,#111628);border:1px solid var(--line);border-bottom:4px solid #8992a8;border-radius:14px;padding:16px;min-width:0}
+.shop-item.tier-common{border-bottom-color:#a3a8b5}
+.shop-item.tier-uncommon{border-bottom-color:#3498db}
+.shop-item.tier-rare{border-bottom-color:#9b59b6}
+.shop-item.tier-epic{border-bottom-color:#e84393}
+.shop-item.tier-legendary{border-bottom-color:#f5c542;box-shadow:inset 0 0 22px #f5c54210}
+.shop-item.owned{background:linear-gradient(180deg,#14301f,#0f1a1a);border-color:#235c3a}
+.shop-emoji{font-size:48px;line-height:1;margin-bottom:10px}
+.shop-name{font-weight:800;font-size:16px;line-height:1.25;margin-bottom:4px}
+.shop-tier{font-size:12px;font-weight:700;margin-bottom:8px;color:var(--mut)}
+.shop-tier.tier-uncommon{color:#5dade2}
+.shop-tier.tier-rare{color:#b57edc}
+.shop-tier.tier-epic{color:#f06ca8}
+.shop-tier.tier-legendary{color:var(--gold)}
+.shop-desc{color:var(--mut);font-size:13px;flex:1;margin:0 0 14px}
+.shop-price{font-size:19px;font-weight:800;color:var(--gold);margin-bottom:10px;overflow-wrap:anywhere}
+.shop-price small{display:block;font-size:12px;font-weight:500;color:var(--mut)}
+.shop-item .btn{width:100%}
+.shop-item .btn.sell{background:transparent;color:var(--txt);border:1px solid var(--line)}
+.shop-item .owned-tag{color:var(--g);font-weight:800;font-size:12px;margin-bottom:8px}
+.shop-item.cant .shop-price{color:var(--mut)}
+.shop-empty{grid-column:1/-1;text-align:center;color:var(--mut);padding:40px 10px;border:1px dashed var(--line);border-radius:14px}
 @media(prefers-reduced-motion:reduce){.announcement-track{animation-duration:90s}}
 @media(max-width:650px){
   header{padding:12px}
@@ -163,6 +202,10 @@ td input{width:110px}
   .hl-stat strong{font-size:17px}
   .hl-buttons .btn{padding:11px 13px}
   #utable th,#utable td{padding:8px}
+  .shop-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .shop-item{padding:12px}
+  .shop-emoji{font-size:38px}
+  .shop-stat{flex:1;min-width:130px}
   .admin-actions .btn{padding:8px 10px}
 }
 </style>
@@ -301,6 +344,33 @@ td input{width:110px}
     <p class="case-note">Aces are high, twos are low, and equal ranks lose. Your round and multiplier are stored on the server.</p>
   </section>
 
+  <section id="shop" class="card hide">
+    <div class="shop-head">
+      <div>
+        <h2>🛍️ Luxury Shop</h2>
+        <p>Spend your virtual coins on watches, cars, real estate and more. Sell back anytime for <span id="shopRate">80%</span> of what you paid.</p>
+      </div>
+      <div class="shop-stats">
+        <div class="shop-stat"><small>Collection value</small><strong id="shopWorth">0</strong></div>
+        <div class="shop-stat"><small>Items owned</small><strong id="shopOwnedCount">0</strong></div>
+      </div>
+    </div>
+    <div class="shop-cats" id="shopCats" role="tablist"></div>
+    <div class="shop-toolbar">
+      <div class="shop-count" id="shopCount"></div>
+      <div>
+        <label for="shopSort">Sort by</label>
+        <select id="shopSort" onchange="shopSortChange(this.value)">
+          <option value="asc">Price: low to high</option>
+          <option value="desc">Price: high to low</option>
+          <option value="afford">Affordable first</option>
+        </select>
+      </div>
+    </div>
+    <div class="shop-grid" id="shopGrid"></div>
+    <p class="case-note">Virtual currency only. All brands and items are fictional and have no real-world value.</p>
+  </section>
+
   <!-- Admin account management -->
   <section id="admin" class="card hide">
     <h3 style="margin-top:0">🛠 Admin · Manage Accounts</h3>
@@ -413,7 +483,8 @@ async function init(){
     ['roulette','🎡 Roulette'],
     ['boxes','🎁 Boxes'],
     ['chicken','🐔 Chicken Road'],
-    ['higherlower','🃏 Higher or Lower']
+    ['higherlower','🃏 Higher or Lower'],
+    ['shop','🛍️ Shop']
   ];
   if(d.isAdmin)tabs.push(['admin','🛠 Admin']);
 
@@ -434,6 +505,7 @@ function show(t){
     b.classList.toggle('on',b.dataset.t===t)
   );
   if(t==='admin'){loadUsers();loadAnnouncement(true);}
+  if(t==='shop')loadShop();
 }
 
 // Mines
@@ -939,6 +1011,183 @@ function resume(g){
 
     $('#hlstatus').textContent='Round resumed. Continue guessing or cash out after a correct guess.';
   }
+}
+
+// Luxury shop
+const TIER_LABEL={common:'Common',uncommon:'Uncommon',rare:'Rare',epic:'Epic',legendary:'Legendary'};
+let shopData=null,shopCat='watches',shopSort='asc',shopBusy=false;
+
+async function loadShop(){
+  const d=await api('shop');
+  if(!d)return;
+  shopData=d;
+  setBal(d.balance);
+  $('#shopRate').textContent=Math.round(d.sellRate*100)+'%';
+  if(shopCat!=='collection'&&!d.categories.some(c=>c.id===shopCat))shopCat=d.categories[0].id;
+  renderShop();
+}
+
+function shopOwnedMap(){
+  return new Map(shopData.owned.map(o=>[o.id,o.paid]));
+}
+
+function shopSortChange(v){
+  shopSort=v;
+  renderShop();
+}
+
+function shopPick(cat){
+  shopCat=cat;
+  renderShop();
+}
+
+function renderShop(){
+  if(!shopData)return;
+  const owned=shopOwnedMap();
+  const items=shopData.items;
+  const bal=me?me.balance:shopData.balance;
+
+  // Summary stats
+  let worth=0;
+  for(const o of shopData.owned)worth+=Math.floor(o.paid*shopData.sellRate);
+  $('#shopWorth').textContent=fmt(worth);
+  $('#shopOwnedCount').textContent=owned.size+' / '+items.length;
+
+  // Category tabs
+  const cats=$('#shopCats');
+  cats.replaceChildren();
+  for(const c of shopData.categories){
+    const all=items.filter(i=>i.category===c.id);
+    const have=all.filter(i=>owned.has(i.id)).length;
+    const b=document.createElement('button');
+    b.className='shop-cat'+(shopCat===c.id?' on':'');
+    b.setAttribute('role','tab');
+    b.setAttribute('aria-selected',shopCat===c.id);
+    b.append(c.emoji+' '+c.name);
+    const cnt=document.createElement('span');
+    cnt.className='cnt';
+    cnt.textContent=have+'/'+all.length;
+    b.appendChild(cnt);
+    b.onclick=()=>shopPick(c.id);
+    cats.appendChild(b);
+  }
+  const col=document.createElement('button');
+  col.className='shop-cat collection'+(shopCat==='collection'?' on':'');
+  col.setAttribute('role','tab');
+  col.setAttribute('aria-selected',shopCat==='collection');
+  col.append('🗄️ My Collection');
+  const cc=document.createElement('span');
+  cc.className='cnt';
+  cc.textContent=owned.size;
+  col.appendChild(cc);
+  col.onclick=()=>shopPick('collection');
+  cats.appendChild(col);
+
+  // Items for current view
+  let list=shopCat==='collection'
+    ?items.filter(i=>owned.has(i.id))
+    :items.filter(i=>i.category===shopCat);
+
+  if(shopSort==='asc')list=[...list].sort((a,b)=>a.price-b.price);
+  else if(shopSort==='desc')list=[...list].sort((a,b)=>b.price-a.price);
+  else list=[...list].sort((a,b)=>{
+    const aa=a.price<=bal?0:1,bb=b.price<=bal?0:1;
+    return aa-bb||a.price-b.price;
+  });
+
+  $('#shopCount').textContent=list.length+(list.length===1?' item':' items');
+
+  const grid=$('#shopGrid');
+  grid.replaceChildren();
+
+  if(!list.length){
+    const empty=document.createElement('div');
+    empty.className='shop-empty';
+    empty.textContent='Nothing here yet. Buy something from the shop and it will show up in your collection.';
+    grid.appendChild(empty);
+    return;
+  }
+
+  for(const item of list)grid.appendChild(shopCard(item,owned,bal));
+}
+
+function shopCard(item,owned,bal){
+  const isOwned=owned.has(item.id);
+  const afford=item.price<=bal;
+  const card=document.createElement('div');
+  card.className='shop-item tier-'+item.tier+(isOwned?' owned':'')+(!isOwned&&!afford?' cant':'');
+
+  const emoji=document.createElement('div');
+  emoji.className='shop-emoji';
+  emoji.textContent=item.emoji;
+
+  const name=document.createElement('div');
+  name.className='shop-name';
+  name.textContent=item.name;
+
+  const tier=document.createElement('div');
+  tier.className='shop-tier tier-'+item.tier;
+  tier.textContent=TIER_LABEL[item.tier]||item.tier;
+
+  const desc=document.createElement('p');
+  desc.className='shop-desc';
+  desc.textContent=item.desc;
+
+  card.append(emoji,name,tier,desc);
+
+  if(isOwned){
+    const paid=owned.get(item.id);
+    const refund=Math.floor(paid*shopData.sellRate);
+    const tag=document.createElement('div');
+    tag.className='owned-tag';
+    tag.textContent='✔ OWNED';
+    const price=document.createElement('div');
+    price.className='shop-price';
+    price.textContent='🪙 '+fmt(paid);
+    const small=document.createElement('small');
+    small.textContent='paid · sells for '+fmt(refund);
+    price.appendChild(small);
+    const btn=document.createElement('button');
+    btn.className='btn sell';
+    btn.textContent='Sell for '+fmt(refund);
+    btn.onclick=()=>shopSell(item,refund);
+    card.append(tag,price,btn);
+  }else{
+    const price=document.createElement('div');
+    price.className='shop-price';
+    price.textContent='🪙 '+fmt(item.price);
+    const btn=document.createElement('button');
+    btn.className='btn';
+    btn.textContent=afford?'Buy':'Need '+fmt(item.price-bal)+' more';
+    btn.disabled=!afford;
+    btn.onclick=()=>shopBuy(item);
+    card.append(price,btn);
+  }
+  return card;
+}
+
+async function shopBuy(item){
+  if(shopBusy)return;
+  if(!confirm(`Buy ${item.name} for ${fmt(item.price)} coins?`))return;
+  shopBusy=true;
+  const d=await api('shop/buy',{id:item.id});
+  shopBusy=false;
+  if(!d){await loadShop();return;}
+  setBal(d.balance);
+  toast(`${item.emoji} ${d.msg}`);
+  await loadShop();
+}
+
+async function shopSell(item,refund){
+  if(shopBusy)return;
+  if(!confirm(`Sell ${item.name} for ${fmt(refund)} coins?`))return;
+  shopBusy=true;
+  const d=await api('shop/sell',{id:item.id});
+  shopBusy=false;
+  if(!d){await loadShop();return;}
+  setBal(d.balance);
+  toast(`${d.msg} for ${fmt(d.refund)} coins`);
+  await loadShop();
 }
 
 // Admin account management

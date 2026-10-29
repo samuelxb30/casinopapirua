@@ -89,6 +89,84 @@ let tickN = 0;
 let tradeId = 0;
 const TRADES = [];
 
+// ---------- Luxury shop catalog ----------
+// Prices are in virtual coins. All brands and models are fictional.
+// tier uses the same names as the case rarities: common, uncommon, rare, epic, legendary.
+
+const SHOP_SELL_RATE = 0.8;
+
+const SHOP_CATEGORIES = [
+  { id: 'watches',    name: 'Watches',            emoji: '⌚' },
+  { id: 'cars',       name: 'Cars',               emoji: '🏎️' },
+  { id: 'realestate', name: 'Real Estate',        emoji: '🏡' },
+  { id: 'yachts',     name: 'Yachts & Jets',      emoji: '🛥️' },
+  { id: 'jewelry',    name: 'Jewelry',            emoji: '💍' },
+  { id: 'art',        name: 'Art & Collectibles', emoji: '🖼️' }
+];
+
+const SHOP_ITEMS = [
+  // ----- Watches -----
+  { id: 'w01', category: 'watches', emoji: '⌚', tier: 'common',    price: 2500,      name: 'Pocket Quartz Classic',        desc: 'Reliable, slim and forgettable. Every collection starts somewhere.' },
+  { id: 'w02', category: 'watches', emoji: '⏱️', tier: 'common',    price: 12000,     name: 'Steel Deep Diver 300',          desc: 'Waterproof to 300 meters. You will never go deeper than the pool.' },
+  { id: 'w03', category: 'watches', emoji: '🧭', tier: 'uncommon',  price: 45000,     name: 'Aviator Chronograph',           desc: 'Three sub-dials, leather strap, and a pilot-approved attitude.' },
+  { id: 'w04', category: 'watches', emoji: '🕰️', tier: 'rare',      price: 150000,    name: 'Golden Dress Watch',            desc: '18-karat case, ultra-thin movement. Slides under a cuff like it owns the place.' },
+  { id: 'w05', category: 'watches', emoji: '⚙️', tier: 'epic',      price: 600000,    name: 'Skeleton Tourbillon',           desc: 'See the gears spin. A rotating cage cancels gravity, and your savings.' },
+  { id: 'w06', category: 'watches', emoji: '🌙', tier: 'epic',      price: 2400000,   name: 'Moonphase Grand Complication', desc: 'Perpetual calendar, moon phase and leap-year memory in one case.' },
+  { id: 'w07', category: 'watches', emoji: '💎', tier: 'legendary', price: 9500000,   name: 'Platinum Perpetual Diamond',    desc: 'Platinum case, baguette-cut diamond bezel. Quietly the loudest wrist in the room.' },
+  { id: 'w08', category: 'watches', emoji: '👑', tier: 'legendary', price: 40000000,  name: 'The Royal Minute Repeater',     desc: 'Chimes the time on tiny gongs. Only nine were ever made.' },
+
+  // ----- Cars -----
+  { id: 'c01', category: 'cars', emoji: '🚗', tier: 'common',    price: 18000,      name: 'City Hatchback',                 desc: 'Fits any parking space. Sips fuel. Gets you there.' },
+  { id: 'c02', category: 'cars', emoji: '🚙', tier: 'common',    price: 45000,      name: 'Family Adventure SUV',           desc: 'Roof rack, third row, and a trunk that swallows luggage.' },
+  { id: 'c03', category: 'cars', emoji: '🚘', tier: 'uncommon',  price: 120000,     name: 'Retro Roadster',                 desc: 'Convertible top, wire wheels, and a sunset soundtrack.' },
+  { id: 'c04', category: 'cars', emoji: '⚡', tier: 'rare',      price: 250000,     name: 'Volt GT Electric Sedan',         desc: '0 to 100 in 2.9 seconds, in complete silence.' },
+  { id: 'c05', category: 'cars', emoji: '🏁', tier: 'rare',      price: 750000,     name: 'Circuit RS Track Coupe',         desc: 'Street-legal on paper. Happiest with a checkered flag in front of it.' },
+  { id: 'c06', category: 'cars', emoji: '🏎️', tier: 'epic',      price: 2800000,    name: 'Veloce V12 Supercar',            desc: 'Naturally aspirated V12 that you can hear from the next town.' },
+  { id: 'c07', category: 'cars', emoji: '🚀', tier: 'legendary', price: 12000000,   name: 'Apex One Hypercar',              desc: '1,600 horsepower, carbon monocoque, and a waiting list of four years.' },
+  { id: 'c08', category: 'cars', emoji: '🏆', tier: 'legendary', price: 30000000,   name: '1957 Grand Prix Winner',         desc: 'A real race-winning car from the golden era, now a museum-grade classic.' },
+  { id: 'c09', category: 'cars', emoji: '🛡️', tier: 'legendary', price: 60000000,   name: 'Monarch Armored Limousine',      desc: 'Bulletproof glass, champagne fridge, and a privacy partition.' },
+
+  // ----- Real Estate -----
+  { id: 'r01', category: 'realestate', emoji: '🏢', tier: 'common',    price: 40000,        name: 'Downtown Studio Apartment',   desc: 'One room, big window, zero lawn to mow.' },
+  { id: 'r02', category: 'realestate', emoji: '🛖', tier: 'uncommon',  price: 350000,       name: 'Lakeside Cabin',              desc: 'Pine walls, wood stove, private dock.' },
+  { id: 'r03', category: 'realestate', emoji: '🏘️', tier: 'uncommon',  price: 180000,       name: 'Suburban Townhouse',          desc: 'Two floors, a garage and a friendly neighborhood.' },
+  { id: 'r04', category: 'realestate', emoji: '🏡', tier: 'rare',      price: 450000,       name: 'Family Home with Garden',     desc: 'Four bedrooms, a porch swing, and an apple tree.' },
+  { id: 'r05', category: 'realestate', emoji: '🌆', tier: 'epic',      price: 2000000,      name: 'Skyline Penthouse',           desc: 'Top floor, wraparound terrace, the whole city at your feet.' },
+  { id: 'r06', category: 'realestate', emoji: '🏖️', tier: 'epic',      price: 5500000,      name: 'Oceanfront Beach Villa',      desc: 'Infinity pool that merges with the horizon.' },
+  { id: 'r07', category: 'realestate', emoji: '🏔️', tier: 'epic',      price: 8000000,      name: 'Alpine Ski Chalet',           desc: 'Ski-in, ski-out, with a hot tub on the balcony.' },
+  { id: 'r08', category: 'realestate', emoji: '🏬', tier: 'legendary', price: 60000000,     name: 'Skyline Tower (Entire Building)', desc: '48 floors of rentable ego. Your name is on the lobby wall.' },
+  { id: 'r09', category: 'realestate', emoji: '🏝️', tier: 'legendary', price: 150000000,    name: 'Private Tropical Island',     desc: 'White sand, a lagoon, and nobody else for 20 miles.' },
+  { id: 'r10', category: 'realestate', emoji: '🏰', tier: 'legendary', price: 300000000,    name: 'Hilltop Medieval Castle',     desc: 'Towers, a moat, a drawbridge, and a very large heating bill.' },
+  { id: 'r11', category: 'realestate', emoji: '🛰️', tier: 'legendary', price: 1000000000,   name: 'Orbital Resort Suite',        desc: 'The ultimate view: 16 sunrises a day.' },
+
+  // ----- Yachts & Jets -----
+  { id: 'y01', category: 'yachts', emoji: '🛶', tier: 'common',    price: 15000,       name: 'Weekend Jet Ski',        desc: 'Fast, wet and a little reckless.' },
+  { id: 'y02', category: 'yachts', emoji: '⛵', tier: 'uncommon',  price: 80000,       name: 'Coastal Sailboat',       desc: 'Wind-powered and surprisingly cozy below deck.' },
+  { id: 'y03', category: 'yachts', emoji: '🚤', tier: 'rare',      price: 400000,      name: 'Sport Speedboat',        desc: 'Twin engines and a wake that tells everyone you arrived.' },
+  { id: 'y04', category: 'yachts', emoji: '🚁', tier: 'epic',      price: 3000000,     name: 'Executive Helicopter',   desc: 'Skip traffic entirely. Land on your own roof.' },
+  { id: 'y05', category: 'yachts', emoji: '🛥️', tier: 'epic',      price: 6000000,     name: 'Motor Yacht Aurora',     desc: 'Four cabins, a sun deck, and a captain called Marco.' },
+  { id: 'y06', category: 'yachts', emoji: '✈️', tier: 'legendary', price: 35000000,    name: 'Private Jet Falcon X',   desc: 'Crosses oceans nonstop with a full-size bed on board.' },
+  { id: 'y07', category: 'yachts', emoji: '🚢', tier: 'legendary', price: 120000000,   name: 'Superyacht Leviathan',   desc: '120 meters, a helipad, a cinema and a submarine in the garage.' },
+
+  // ----- Jewelry -----
+  { id: 'j01', category: 'jewelry', emoji: '💍', tier: 'common',    price: 800,        name: 'Sterling Silver Ring',        desc: 'Simple, clean, polished.' },
+  { id: 'j02', category: 'jewelry', emoji: '📿', tier: 'uncommon',  price: 20000,      name: 'Pearl Necklace',              desc: 'Hand-knotted South Sea pearls.' },
+  { id: 'j03', category: 'jewelry', emoji: '⛓️', tier: 'rare',      price: 75000,      name: 'Heavy Gold Chain',            desc: '24-karat links that mean business.' },
+  { id: 'j04', category: 'jewelry', emoji: '💚', tier: 'epic',      price: 400000,     name: 'Emerald Drop Earrings',       desc: 'Deep green stones with an impossible shine.' },
+  { id: 'j05', category: 'jewelry', emoji: '👸', tier: 'legendary', price: 5000000,    name: 'Diamond Tiara',               desc: 'More than 600 diamonds on a platinum band.' },
+  { id: 'j06', category: 'jewelry', emoji: '🔷', tier: 'legendary', price: 50000000,   name: 'The Midnight Blue Diamond',   desc: '45 carats of rare blue. Its legend is older than any bank.' },
+
+  // ----- Art & Collectibles -----
+  { id: 'a01', category: 'art', emoji: '🖼️', tier: 'common',    price: 3000,       name: 'Signed Limited Print',        desc: 'Numbered 12 of 200 and framed in oak.' },
+  { id: 'a02', category: 'art', emoji: '🗿', tier: 'uncommon',  price: 90000,      name: 'Bronze Garden Sculpture',     desc: 'A lifetime of weather will only make it look better.' },
+  { id: 'a03', category: 'art', emoji: '📚', tier: 'rare',      price: 250000,     name: 'Mint First-Issue Comic',      desc: 'Graded 9.8 and sealed in a protective case.' },
+  { id: 'a04', category: 'art', emoji: '🍷', tier: 'epic',      price: 1200000,    name: 'Vintage Wine Cellar',         desc: '2,000 bottles across six legendary vintages.' },
+  { id: 'a05', category: 'art', emoji: '🎨', tier: 'legendary', price: 25000000,   name: 'Old Master Oil Painting',     desc: 'Four centuries old, cracked varnish and priceless stare.' },
+  { id: 'a06', category: 'art', emoji: '🦖', tier: 'legendary', price: 90000000,   name: 'Fossil T-Rex Skeleton',       desc: 'Sixty-seven million years old. Fits in a ballroom.' }
+];
+
+const SHOP_BY_ID = new Map(SHOP_ITEMS.map(i => [i.id, i]));
+
 // ---------- Database setup ----------
 
 async function initDatabase() {
@@ -145,6 +223,16 @@ async function initDatabase() {
       take_profit DOUBLE PRECISION,
       stop_loss DOUBLE PRECISION,
       PRIMARY KEY (user_id, symbol)
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS shop_purchases (
+      user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      item_id TEXT NOT NULL,
+      price_paid BIGINT NOT NULL CHECK (price_paid >= 0),
+      purchased_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (user_id, item_id)
     )
   `);
 
@@ -591,6 +679,11 @@ app.post('/api/admin/delete-user', auth, admin, route(async (req, res) => {
 
     await client.query(
       'DELETE FROM trades WHERE user_id=$1',
+      [target.id]
+    );
+
+    await client.query(
+      'DELETE FROM shop_purchases WHERE user_id=$1',
       [target.id]
     );
 
@@ -1572,6 +1665,103 @@ app.post('/api/auto-sell', auth, route(async (req, res) => {
   `, [req.user.id, sym, target, stop]);
 
   res.json({ msg: `Auto-sell saved for ${sym}` });
+}));
+
+// ---------- Luxury shop ----------
+
+const shopFail = (msg, status = 400) => {
+  const err = new Error(msg);
+  err.status = status;
+  return err;
+};
+
+app.get('/api/shop', auth, route(async (req, res) => {
+  const owned = await pool.query(
+    'SELECT item_id, price_paid FROM shop_purchases WHERE user_id=$1',
+    [req.user.id]
+  );
+
+  res.json({
+    balance: await getBal(req.user.id),
+    sellRate: SHOP_SELL_RATE,
+    categories: SHOP_CATEGORIES,
+    items: SHOP_ITEMS,
+    owned: owned.rows
+      .filter(r => SHOP_BY_ID.has(r.item_id))
+      .map(r => ({ id: r.item_id, paid: Number(r.price_paid) }))
+  });
+}));
+
+app.post('/api/shop/buy', auth, route(async (req, res) => {
+  const item = SHOP_BY_ID.get(String((req.body || {}).id || ''));
+  if (!item) return fail(res, 'Unknown item');
+
+  const uid = req.user.id;
+
+  await transaction(async client => {
+    const userResult = await client.query(
+      'SELECT balance FROM users WHERE id=$1 FOR UPDATE',
+      [uid]
+    );
+
+    if (!userResult.rows.length) throw shopFail('User not found', 404);
+    if (Number(userResult.rows[0].balance) < item.price)
+      throw shopFail('Not enough balance');
+
+    const inserted = await client.query(`
+      INSERT INTO shop_purchases(user_id,item_id,price_paid)
+      VALUES($1,$2,$3)
+      ON CONFLICT(user_id,item_id) DO NOTHING
+      RETURNING item_id
+    `, [uid, item.id, item.price]);
+
+    if (!inserted.rows.length) throw shopFail('You already own this item');
+
+    await client.query(
+      'UPDATE users SET balance=balance-$1 WHERE id=$2',
+      [item.price, uid]
+    );
+  });
+
+  res.json({
+    balance: await getBal(uid),
+    msg: `Purchased ${item.name}`,
+    paid: item.price
+  });
+}));
+
+app.post('/api/shop/sell', auth, route(async (req, res) => {
+  const item = SHOP_BY_ID.get(String((req.body || {}).id || ''));
+  if (!item) return fail(res, 'Unknown item');
+
+  const uid = req.user.id;
+  let refund = 0;
+
+  await transaction(async client => {
+    // Lock the user row first so balance updates stay ordered with buys.
+    await client.query('SELECT id FROM users WHERE id=$1 FOR UPDATE', [uid]);
+
+    const removed = await client.query(`
+      DELETE FROM shop_purchases
+      WHERE user_id=$1 AND item_id=$2
+      RETURNING price_paid
+    `, [uid, item.id]);
+
+    if (!removed.rows.length) throw shopFail('You do not own this item');
+
+    refund = Math.floor(Number(removed.rows[0].price_paid) * SHOP_SELL_RATE);
+
+    await client.query(
+      'UPDATE users SET balance=balance+$1 WHERE id=$2',
+      [refund, uid]
+    );
+  });
+
+  res.json({
+    balance: await getBal(uid),
+    msg: `Sold ${item.name}`,
+    refund
+  });
 }));
 
 // ---------- Errors and startup ----------
