@@ -1719,7 +1719,7 @@ function tgSearchInput(){
   const q=$('#tgSearch').value.trim();
   tgRenderList();
   clearTimeout(tgSearchTimer);
-  if(q.length<2){tgSearchRes=[];tgRenderList();return;}
+  if(q.length<1){tgSearchRes=[];tgRenderList();return;}
   const seq=++tgSearchSeq;
   tgSearchTimer=setTimeout(async()=>{
     const d=await tgApi('users/search?q='+encodeURIComponent(q));
@@ -2088,8 +2088,8 @@ async function renameUser(id){
   const input=document.getElementById('rename'+id);
   const username=input?.value.trim();
 
-  if(!username||!/^[a-zA-Z0-9_]{3,16}$/.test(username)){
-    toast('Username must be 3–16 letters, numbers, or underscores');
+  if(!username||username.length>16){
+    toast('Username must be 1–16 characters');
     return;
   }
 
@@ -2206,5 +2206,6 @@ setInterval(()=>loadAnnouncement(false),10000);
 init();
 tgInit();
 </script>
+<script src="/exodus.js" defer></script>
 </body>
 </html>

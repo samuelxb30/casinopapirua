@@ -21,6 +21,12 @@ const app = express();
 app.use(express.json({ limit: '20kb' }));
 
 const START_BALANCE = 1000;
+// Any name of 1-16 characters (no leading/trailing spaces, no control characters).
+const NAME_RE = /^[^\u0000-\u001f\u007f]{1,16}$/;
+const validName = n => typeof n === 'string' && n === n.trim() && NAME_RE.test(n);
+const NAME_ERR = 'Username must be 1-16 characters';
+const validPassword = p => typeof p === 'string' && p.length >= 1 && p.length <= 200;
+const PASS_ERR = 'Password must be 1-200 characters';
 const DEFAULT_ANNOUNCEMENT = 'Welcome to Royal Paper Casino — virtual points only.';
 const ANNOUNCEMENT_MAX = 240;
 const CHICKEN_MAX = 12;
@@ -88,6 +94,90 @@ for (const c of Object.values(COINS)) {
 let tickN = 0;
 let tradeId = 0;
 const TRADES = [];
+
+// ---------- Exodus-style game wallet ----------
+// Real asset names, simulated prices (virtual coins only, no real value).
+// Wallets are separate from casino accounts: anyone who has the wallet's
+// password OR its 12-word seed phrase can open it and move the funds.
+
+const WCOINS = {
+  BTC:  { name: 'Bitcoin',  glyph: '₿', color: '#f7931a', anchor: 103794.44, vol: 0.0009 },
+  ETH:  { name: 'Ethereum', glyph: 'Ξ', color: '#8c9eff', anchor: 2730.28,   vol: 0.0011 },
+  SOL:  { name: 'Solana',   glyph: '◎', color: '#14f195', anchor: 172.34,    vol: 0.0014 },
+  BNB:  { name: 'BNB',      glyph: 'B',      color: '#f3ba2f', anchor: 690,       vol: 0.0010 },
+  XRP:  { name: 'XRP',      glyph: '✕', color: '#9aa4b5', anchor: 2.45,      vol: 0.0016 },
+  DOGE: { name: 'Dogecoin', glyph: 'Ð', color: '#c2a633', anchor: 0.21,      vol: 0.0020 },
+  ADA:  { name: 'Cardano',  glyph: '₳', color: '#3b82f6', anchor: 0.75,      vol: 0.0016 },
+  LTC:  { name: 'Litecoin', glyph: 'Ł', color: '#a6a9aa', anchor: 98,        vol: 0.0012 }
+};
+
+for (const c of Object.values(WCOINS)) {
+  c.price = c.anchor;
+  c.mu = 0;
+  c.hist = [];
+}
+
+function walletTick() {
+  for (const c of Object.values(WCOINS)) {
+    if (rand() < 0.02) c.mu = (rand() < 0.5 ? -1 : 1) * c.vol * (0.5 + rand() * 1.5);
+    c.mu *= 0.97;
+
+    const r = c.mu + gauss() * c.vol - 0.0006 * Math.log(c.price / c.anchor);
+    const next = c.price * Math.exp(Math.max(-0.05, Math.min(0.05, r)));
+
+    c.price = Number.isFinite(next)
+      ? Math.max(c.anchor * 0.2, Math.min(c.anchor * 5, next))
+      : c.anchor;
+
+    c.hist.push(c.price);
+    if (c.hist.length > HIST) c.hist.shift();
+  }
+}
+
+async function persistWalletPrices() {
+  try {
+    for (const [sym, c] of Object.entries(WCOINS)) {
+      await pool.query(`
+        INSERT INTO wallet_prices(symbol, price) VALUES($1, $2)
+        ON CONFLICT(symbol) DO UPDATE SET price=EXCLUDED.price
+      `, [sym, c.price]);
+    }
+  } catch (err) {
+    console.error('Wallet price save error:', err);
+  }
+}
+
+// Premade word list the seed phrases are drawn from (12 distinct words each).
+const WSEED_WORDS = [...new Set((`
+amber anchor angel apple arrow aspen atlas aurora autumn badge bamboo banjo barrel basil beacon beaver berry bishop
+blanket blossom bridge bronze brook bubble buffalo butter cabin cactus camel candle canyon captain carbon cargo carpet
+castle cedar cellar cherry chimney cinder circus citrus clover cobalt comet compass copper coral cotton cougar crater
+crystal curtain cypress dagger daisy dancer delta desert diamond dolphin dragon drum eagle ember emerald engine falcon
+feather ferry fiddle finch flame flint forest fossil fountain fox galaxy garden garnet geyser ginger glacier globe
+goblet granite gravel guitar harbor harvest hazel helmet heron hickory hill honey horizon hunter iceberg island ivory
+jacket jasmine jungle kettle kingdom kitten lagoon lantern laurel lemon lighthouse lilac lizard lotus lumber magnet
+mango maple marble meadow melody mirror monsoon moss mountain mustang nectar needle nickel nomad oasis ocean olive
+onyx orange orchid otter oyster paddle palace panther paper parrot pebble pepper phoenix piano pilot pine planet
+plume pocket pond poppy prairie pumpkin quartz quiver rabbit radar rainbow raven reef river robin rocket saddle
+saffron sailor salmon sapphire scarlet shadow silver skylark slate snow sparrow spice spider spruce stable sunset
+swan tangerine temple thunder tiger timber topaz tower trumpet tulip tundra turtle valley velvet violet volcano
+walnut waterfall whale willow window winter wolf yarrow zebra zephyr
+`).trim().split(/\s+/))];
+
+const WSEED_SET = new Set(WSEED_WORDS);
+
+function genSeed() {
+  const bag = [...WSEED_WORDS];
+  const out = [];
+  for (let i = 0; i < 12; i++) out.push(bag.splice(crypto.randomInt(bag.length), 1)[0]);
+  return out;
+}
+
+const normSeed = v =>
+  typeof v === 'string' ? v.toLowerCase().split(/[\s,]+/).filter(Boolean) : [];
+
+const seedHash = words =>
+  crypto.createHash('sha256').update('wallet-seed:' + words.join(' ')).digest('hex');
 
 // ---------- Luxury shop catalog ----------
 // Prices are in virtual coins. Real brand and place names are used for fun; items have no real-world value.
@@ -315,6 +405,56 @@ async function initDatabase() {
     )
   `);
 
+  // ----- Exodus-style wallets (separate from casino accounts) -----
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS wallets (
+      id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      name TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
+      seed_hash TEXT NOT NULL UNIQUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS wallets_name_lower_idx ON wallets (LOWER(name))
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS wallet_sessions (
+      token TEXT PRIMARY KEY,
+      wallet_id BIGINT NOT NULL REFERENCES wallets(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS wallet_holdings (
+      wallet_id BIGINT NOT NULL REFERENCES wallets(id) ON DELETE CASCADE,
+      symbol TEXT NOT NULL,
+      quantity DOUBLE PRECISION NOT NULL DEFAULT 0,
+      PRIMARY KEY (wallet_id, symbol)
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS wallet_txs (
+      id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      wallet_id BIGINT NOT NULL REFERENCES wallets(id) ON DELETE CASCADE,
+      kind TEXT NOT NULL,
+      symbol TEXT NOT NULL,
+      quantity DOUBLE PRECISION NOT NULL,
+      coins BIGINT NOT NULL DEFAULT 0,
+      note TEXT NOT NULL DEFAULT '',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS wallet_txs_wallet_idx ON wallet_txs (wallet_id, id DESC)
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS wallet_prices (
+      symbol TEXT PRIMARY KEY,
+      price DOUBLE PRECISION NOT NULL CHECK (price > 0)
+    )
+  `);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS site_settings (
       key TEXT PRIMARY KEY,
@@ -355,6 +495,13 @@ async function initDatabase() {
   for (const row of saved.rows) {
     if (COINS[row.symbol] && Number(row.price) > 0) {
       COINS[row.symbol].price = Number(row.price);
+    }
+  }
+
+  const walletSaved = await pool.query('SELECT symbol, price FROM wallet_prices');
+  for (const row of walletSaved.rows) {
+    if (WCOINS[row.symbol] && Number(row.price) > 0) {
+      WCOINS[row.symbol].price = Number(row.price);
     }
   }
 
@@ -486,6 +633,11 @@ app.get(['/trade', '/trade.html'], (req, res) =>
   res.sendFile(path.join(__dirname, 'trade.html'))
 );
 
+app.get('/exodus.js', (req, res) => {
+  res.set('Cache-Control', 'no-cache');
+  res.sendFile(path.join(__dirname, 'exodus.js'));
+});
+
 app.get('/health', (req, res) => res.json({ ok: true, tick: tickN }));
 
 // ---------- Accounts ----------
@@ -493,11 +645,11 @@ app.get('/health', (req, res) => res.json({ ok: true, tick: tickN }));
 app.post('/api/register', route(async (req, res) => {
   const { username, password } = req.body || {};
 
-  if (!/^[a-zA-Z0-9_]{3,16}$/.test(username || ''))
-    return fail(res, 'Username: 3-16 letters, numbers or _');
+  if (!validName(username))
+    return fail(res, NAME_ERR);
 
-  if (typeof password !== 'string' || password.length < 6 || password.length > 200)
-    return fail(res, 'Password must be 6-200 characters');
+  if (!validPassword(password))
+    return fail(res, PASS_ERR);
 
   const existing = await pool.query(
     'SELECT 1 FROM users WHERE LOWER(username)=LOWER($1)',
@@ -663,11 +815,8 @@ app.post('/api/admin/rename', auth, admin, route(async (req, res) => {
     return fail(res, 'Invalid account ID');
   }
 
-  if (
-    typeof username !== 'string' ||
-    !/^[a-zA-Z0-9_]{3,16}$/.test(username)
-  ) {
-    return fail(res, 'Username: 3-16 letters, numbers or _');
+  if (!validName(username)) {
+    return fail(res, NAME_ERR);
   }
 
   await transaction(async client => {
@@ -1545,6 +1694,7 @@ async function processAutoSells() {
 
 function tick(processOrders = true) {
   tickN++;
+  walletTick();
 
   for (const c of Object.values(COINS)) {
     if (rand() < 0.035) {
@@ -1576,6 +1726,7 @@ function tick(processOrders = true) {
 }
 
 async function persistMarket() {
+  await persistWalletPrices();
   for (const [sym, c] of Object.entries(COINS)) {
     await pool.query(`
       UPDATE market_coins
@@ -1921,7 +2072,6 @@ app.post('/api/shop/sell', auth, route(async (req, res) => {
 // ---------- Chat (Telegram-style messenger) ----------
 
 const CHAT_MAX_LEN = 1000;
-const CHAT_NAME_RE = /^[a-zA-Z0-9_]{3,16}$/;
 const CHAT_RESERVED = new Set(['public']);
 
 // userId (string) -> Set of open SSE responses
@@ -1989,7 +2139,7 @@ const chatMsg = r => ({
 });
 
 async function chatFindUser(name) {
-  if (typeof name !== 'string' || !CHAT_NAME_RE.test(name)) return null;
+  if (!validName(name)) return null;
   const r = await pool.query(
     'SELECT id, username, last_seen FROM chat_users WHERE LOWER(username)=LOWER($1)',
     [name]
@@ -2026,14 +2176,14 @@ async function chatNewSession(uid) {
 app.post('/api/chat/register', route(async (req, res) => {
   const { username, password } = req.body || {};
 
-  if (typeof username !== 'string' || !CHAT_NAME_RE.test(username))
-    return fail(res, 'Username: 3-16 letters, numbers or _');
+  if (!validName(username))
+    return fail(res, NAME_ERR);
 
   if (CHAT_RESERVED.has(username.toLowerCase()))
     return fail(res, 'That username is reserved');
 
-  if (typeof password !== 'string' || password.length < 6 || password.length > 200)
-    return fail(res, 'Password must be 6-200 characters');
+  if (!validPassword(password))
+    return fail(res, PASS_ERR);
 
   const salt = crypto.randomBytes(16).toString('hex');
   const passwordHash = `${salt}:${hashPw(password, salt)}`;
@@ -2346,7 +2496,7 @@ app.post('/api/chat/read', chatAuth, route(async (req, res) => {
 // Find people by the start of their username.
 app.get('/api/chat/users/search', chatAuth, route(async (req, res) => {
   const q = String(req.query.q || '').trim().slice(0, 16);
-  if (q.length < 2) return res.json({ users: [] });
+  if (q.length < 1) return res.json({ users: [] });
 
   const escaped = q.replace(/[\\%_]/g, '\\$&');
 
@@ -2370,6 +2520,385 @@ app.get('/api/chat/user', chatAuth, route(async (req, res) => {
     name: p.username,
     online: chatOnline(p.id),
     lastSeen: new Date(p.last_seen).toISOString()
+  });
+}));
+
+// ---------- Exodus-style wallet API ----------
+// Every call needs a casino login (Authorization) so coins can move to and
+// from the casino balance. Wallet calls also need X-Wallet-Token, which comes
+// from opening the wallet with its password or its seed phrase.
+
+const walletTries = new Map();
+
+// Max 10 sign-in / create attempts per minute per casino user (slows guessing).
+function walletRateOk(uid) {
+  const now = Date.now();
+  const recent = (walletTries.get(uid) || []).filter(t => now - t < 60000);
+  if (recent.length >= 10) {
+    walletTries.set(uid, recent);
+    return false;
+  }
+  recent.push(now);
+  walletTries.set(uid, recent);
+  return true;
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [uid, list] of walletTries) {
+    if (!list.some(t => now - t < 60000)) walletTries.delete(uid);
+  }
+}, 60000).unref();
+
+async function walletNewSession(walletId) {
+  const token = crypto.randomBytes(32).toString('hex');
+  await pool.query(
+    'INSERT INTO wallet_sessions(token,wallet_id) VALUES($1,$2)',
+    [token, walletId]
+  );
+  return token;
+}
+
+const walletAuth = route(async (req, res, next) => {
+  const token = req.headers['x-wallet-token'] || '';
+
+  if (!token || token.length > 200)
+    return res.status(401).json({ error: 'Open your wallet first', wallet: true });
+
+  const r = await pool.query(`
+    SELECT w.id, w.name
+    FROM wallet_sessions s
+    JOIN wallets w ON w.id = s.wallet_id
+    WHERE s.token = $1
+  `, [token]);
+
+  if (!r.rows.length)
+    return res.status(401).json({ error: 'Wallet session expired', wallet: true });
+
+  req.wallet = r.rows[0];
+  next();
+});
+
+function walletAssets(holdings) {
+  return Object.entries(WCOINS).map(([sym, c]) => {
+    const qty = holdings.get(sym) || 0;
+    return {
+      sym,
+      name: c.name,
+      glyph: c.glyph,
+      color: c.color,
+      price: c.price,
+      change: c.hist.length > 1
+        ? c.price / c.hist[Math.max(0, c.hist.length - 300)] - 1
+        : 0,
+      qty,
+      value: qty * c.price
+    };
+  });
+}
+
+async function walletHoldings(client, walletId) {
+  const r = await client.query(
+    'SELECT symbol, quantity FROM wallet_holdings WHERE wallet_id=$1',
+    [walletId]
+  );
+  return new Map(r.rows.map(x => [x.symbol, Number(x.quantity)]));
+}
+
+app.post('/api/wallet/create', auth, route(async (req, res) => {
+  const { name, password } = req.body || {};
+
+  if (!validName(name)) return fail(res, NAME_ERR);
+  if (!validPassword(password)) return fail(res, PASS_ERR);
+
+  if (!walletRateOk(String(req.user.id)))
+    return fail(res, 'Too many attempts, wait a minute', 429);
+
+  const salt = crypto.randomBytes(16).toString('hex');
+  const passwordHash = `${salt}:${hashPw(password, salt)}`;
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const seed = genSeed();
+
+    try {
+      const r = await pool.query(
+        'INSERT INTO wallets(name,password_hash,seed_hash) VALUES($1,$2,$3) RETURNING id',
+        [name, passwordHash, seedHash(seed)]
+      );
+      const token = await walletNewSession(r.rows[0].id);
+      return res.json({ token, name, seed });
+    } catch (err) {
+      if (err.code !== '23505') throw err;
+
+      const dup = await pool.query(
+        'SELECT 1 FROM wallets WHERE LOWER(name)=LOWER($1)',
+        [name]
+      );
+      if (dup.rows.length) return fail(res, 'Wallet name already taken');
+      // Otherwise it was a seed collision: draw a new phrase and retry.
+    }
+  }
+
+  fail(res, 'Could not create the wallet, please try again', 500);
+}));
+
+app.post('/api/wallet/login', auth, route(async (req, res) => {
+  if (!walletRateOk(String(req.user.id)))
+    return fail(res, 'Too many attempts, wait a minute', 429);
+
+  const { name, password } = req.body || {};
+
+  const r = await pool.query(
+    'SELECT * FROM wallets WHERE LOWER(name)=LOWER($1)',
+    [typeof name === 'string' ? name : '']
+  );
+  const w = r.rows[0];
+
+  if (!w || typeof password !== 'string')
+    return fail(res, 'Wrong wallet name or password', 401);
+
+  const stored = String(w.password_hash || '');
+  const sep = stored.indexOf(':');
+  if (sep < 1) return fail(res, 'Wrong wallet name or password', 401);
+
+  const a = Buffer.from(stored.slice(sep + 1), 'hex');
+  const b = Buffer.from(hashPw(password, stored.slice(0, sep)), 'hex');
+
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b))
+    return fail(res, 'Wrong wallet name or password', 401);
+
+  res.json({ token: await walletNewSession(w.id), name: w.name });
+}));
+
+app.post('/api/wallet/login-seed', auth, route(async (req, res) => {
+  if (!walletRateOk(String(req.user.id)))
+    return fail(res, 'Too many attempts, wait a minute', 429);
+
+  const words = normSeed(req.body && req.body.seed);
+
+  if (words.length !== 12 || !words.every(w => WSEED_SET.has(w)))
+    return fail(res, 'Invalid seed phrase', 401);
+
+  const r = await pool.query(
+    'SELECT id, name FROM wallets WHERE seed_hash=$1',
+    [seedHash(words)]
+  );
+
+  if (!r.rows.length) return fail(res, 'Invalid seed phrase', 401);
+
+  res.json({ token: await walletNewSession(r.rows[0].id), name: r.rows[0].name });
+}));
+
+app.post('/api/wallet/logout', auth, route(async (req, res) => {
+  await pool.query(
+    'DELETE FROM wallet_sessions WHERE token=$1',
+    [String(req.headers['x-wallet-token'] || '')]
+  );
+  res.json({});
+}));
+
+app.get('/api/wallet/me', auth, walletAuth, route(async (req, res) => {
+  const assets = walletAssets(await walletHoldings(pool, req.wallet.id));
+
+  res.json({
+    name: req.wallet.name,
+    balance: await getBal(req.user.id),
+    fee: FEE,
+    assets,
+    total: assets.reduce((sum, a) => sum + a.value, 0)
+  });
+}));
+
+// Buy: spend casino coins, receive the asset in the wallet.
+app.post('/api/wallet/buy', auth, walletAuth, route(async (req, res) => {
+  const sym = String((req.body || {}).sym || '');
+  const c = WCOINS[sym];
+  if (!c) return fail(res, 'Unknown asset');
+
+  const coins = Number(req.body.coins);
+  if (!Number.isSafeInteger(coins) || coins < 1)
+    return fail(res, 'Enter a valid amount');
+
+  const price = c.price;
+  const qty = coins * (1 - FEE) / price;
+
+  await transaction(async client => {
+    const u = await client.query(
+      'SELECT balance FROM users WHERE id=$1 FOR UPDATE',
+      [req.user.id]
+    );
+
+    if (!u.rows.length || Number(u.rows[0].balance) < coins)
+      throw shopFail('Not enough balance');
+
+    await client.query(
+      'UPDATE users SET balance=balance-$1 WHERE id=$2',
+      [coins, req.user.id]
+    );
+
+    await client.query(`
+      INSERT INTO wallet_holdings(wallet_id,symbol,quantity)
+      VALUES($1,$2,$3)
+      ON CONFLICT(wallet_id,symbol) DO UPDATE SET
+        quantity=wallet_holdings.quantity+EXCLUDED.quantity
+    `, [req.wallet.id, sym, qty]);
+
+    await client.query(`
+      INSERT INTO wallet_txs(wallet_id,kind,symbol,quantity,coins,note)
+      VALUES($1,'buy',$2,$3,$4,$5)
+    `, [req.wallet.id, sym, qty, coins, req.user.username]);
+  });
+
+  res.json({
+    balance: await getBal(req.user.id),
+    msg: `Bought ${qty.toPrecision(5)} ${sym}`
+  });
+}));
+
+// Sell: move the asset out of the wallet and into the casino balance of
+// whoever is logged in right now.
+app.post('/api/wallet/sell', auth, walletAuth, route(async (req, res) => {
+  const sym = String((req.body || {}).sym || '');
+  const c = WCOINS[sym];
+  if (!c) return fail(res, 'Unknown asset');
+
+  const pct = Number(req.body.percent);
+  if (!(pct > 0 && pct <= 100)) return fail(res, 'Percent must be 1-100');
+
+  const price = c.price;
+  let got = 0;
+  let q = 0;
+
+  await transaction(async client => {
+    // Lock the user row first so lock order matches buy().
+    await client.query('SELECT id FROM users WHERE id=$1 FOR UPDATE', [req.user.id]);
+
+    const h = await client.query(`
+      SELECT quantity FROM wallet_holdings
+      WHERE wallet_id=$1 AND symbol=$2 FOR UPDATE
+    `, [req.wallet.id, sym]);
+
+    const have = h.rows[0] ? Number(h.rows[0].quantity) : 0;
+    if (have <= 0) throw shopFail('This wallet holds none of that asset');
+
+    q = pct === 100 ? have : have * pct / 100;
+    got = Math.max(0, Math.floor(q * price * (1 - FEE)));
+
+    if (pct === 100) {
+      await client.query(
+        'DELETE FROM wallet_holdings WHERE wallet_id=$1 AND symbol=$2',
+        [req.wallet.id, sym]
+      );
+    } else {
+      await client.query(`
+        UPDATE wallet_holdings SET quantity=quantity-$1
+        WHERE wallet_id=$2 AND symbol=$3
+      `, [q, req.wallet.id, sym]);
+    }
+
+    await client.query(
+      'UPDATE users SET balance=balance+$1 WHERE id=$2',
+      [got, req.user.id]
+    );
+
+    await client.query(`
+      INSERT INTO wallet_txs(wallet_id,kind,symbol,quantity,coins,note)
+      VALUES($1,'sell',$2,$3,$4,$5)
+    `, [req.wallet.id, sym, q, got, req.user.username]);
+  });
+
+  res.json({
+    balance: await getBal(req.user.id),
+    msg: `Sold ${q.toPrecision(5)} ${sym} for ${got.toLocaleString()} coins`
+  });
+}));
+
+// Send: move an asset to another wallet by name.
+app.post('/api/wallet/send', auth, walletAuth, route(async (req, res) => {
+  const sym = String((req.body || {}).sym || '');
+  if (!WCOINS[sym]) return fail(res, 'Unknown asset');
+
+  const pct = Number(req.body.percent);
+  if (!(pct > 0 && pct <= 100)) return fail(res, 'Percent must be 1-100');
+
+  const toName = String(req.body.to || '').trim();
+  if (!validName(toName)) return fail(res, 'Enter the recipient wallet name');
+
+  const target = await pool.query(
+    'SELECT id, name FROM wallets WHERE LOWER(name)=LOWER($1)',
+    [toName]
+  );
+  const dest = target.rows[0];
+
+  if (!dest) return fail(res, 'No wallet with that name', 404);
+  if (String(dest.id) === String(req.wallet.id))
+    return fail(res, "You can't send to the same wallet");
+
+  let q = 0;
+
+  await transaction(async client => {
+    // Lock both holding rows in a fixed order to avoid deadlocks.
+    await client.query(`
+      SELECT wallet_id FROM wallet_holdings
+      WHERE symbol=$1 AND wallet_id IN ($2,$3)
+      ORDER BY wallet_id FOR UPDATE
+    `, [sym, req.wallet.id, dest.id]);
+
+    const h = await client.query(
+      'SELECT quantity FROM wallet_holdings WHERE wallet_id=$1 AND symbol=$2',
+      [req.wallet.id, sym]
+    );
+
+    const have = h.rows[0] ? Number(h.rows[0].quantity) : 0;
+    if (have <= 0) throw shopFail('This wallet holds none of that asset');
+
+    q = pct === 100 ? have : have * pct / 100;
+
+    if (pct === 100) {
+      await client.query(
+        'DELETE FROM wallet_holdings WHERE wallet_id=$1 AND symbol=$2',
+        [req.wallet.id, sym]
+      );
+    } else {
+      await client.query(`
+        UPDATE wallet_holdings SET quantity=quantity-$1
+        WHERE wallet_id=$2 AND symbol=$3
+      `, [q, req.wallet.id, sym]);
+    }
+
+    await client.query(`
+      INSERT INTO wallet_holdings(wallet_id,symbol,quantity)
+      VALUES($1,$2,$3)
+      ON CONFLICT(wallet_id,symbol) DO UPDATE SET
+        quantity=wallet_holdings.quantity+EXCLUDED.quantity
+    `, [dest.id, sym, q]);
+
+    await client.query(`
+      INSERT INTO wallet_txs(wallet_id,kind,symbol,quantity,coins,note)
+      VALUES($1,'send',$2,$3,0,$4), ($5,'receive',$2,$3,0,$6)
+    `, [req.wallet.id, sym, q, dest.name, dest.id, req.wallet.name]);
+  });
+
+  res.json({ msg: `Sent ${q.toPrecision(5)} ${sym} to ${dest.name}` });
+}));
+
+app.get('/api/wallet/history', auth, walletAuth, route(async (req, res) => {
+  const r = await pool.query(`
+    SELECT id, kind, symbol, quantity, coins, note, created_at
+    FROM wallet_txs WHERE wallet_id=$1
+    ORDER BY id DESC LIMIT 40
+  `, [req.wallet.id]);
+
+  res.json({
+    txs: r.rows.map(t => ({
+      id: Number(t.id),
+      kind: t.kind,
+      sym: t.symbol,
+      qty: Number(t.quantity),
+      coins: Number(t.coins),
+      note: t.note,
+      ts: new Date(t.created_at).toISOString()
+    }))
   });
 }));
 
