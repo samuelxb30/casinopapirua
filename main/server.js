@@ -2882,6 +2882,76 @@ app.post('/api/wallet/send', auth, walletAuth, route(async (req, res) => {
   res.json({ msg: `Sent ${q.toPrecision(5)} ${sym} to ${dest.name}` });
 }));
 
+// Exchange: swap one asset for another inside the same wallet.
+app.post('/api/wallet/swap', auth, walletAuth, route(async (req, res) => {
+  const from = String((req.body || {}).from || '');
+  const to = String((req.body || {}).to || '');
+  const cf = WCOINS[from];
+  const ct = WCOINS[to];
+
+  if (!cf || !ct) return fail(res, 'Unknown asset');
+  if (from === to) return fail(res, 'Pick two different assets');
+
+  const pct = Number(req.body.percent);
+  if (!(pct > 0 && pct <= 100)) return fail(res, 'Percent must be 1-100');
+
+  const priceFrom = cf.price;
+  const priceTo = ct.price;
+  let q = 0;
+  let got = 0;
+
+  await transaction(async client => {
+    // Lock both holding rows in a fixed order.
+    await client.query(`
+      SELECT symbol FROM wallet_holdings
+      WHERE wallet_id=$1 AND symbol IN ($2,$3)
+      ORDER BY symbol FOR UPDATE
+    `, [req.wallet.id, from, to]);
+
+    const h = await client.query(
+      'SELECT quantity FROM wallet_holdings WHERE wallet_id=$1 AND symbol=$2',
+      [req.wallet.id, from]
+    );
+
+    const have = h.rows[0] ? Number(h.rows[0].quantity) : 0;
+    if (have <= 0) throw shopFail('This wallet holds none of that asset');
+
+    q = pct === 100 ? have : have * pct / 100;
+    got = q * priceFrom * (1 - FEE) / priceTo;
+
+    if (!(got > 0) || !Number.isFinite(got)) throw shopFail('Amount too small to exchange');
+
+    if (pct === 100) {
+      await client.query(
+        'DELETE FROM wallet_holdings WHERE wallet_id=$1 AND symbol=$2',
+        [req.wallet.id, from]
+      );
+    } else {
+      await client.query(`
+        UPDATE wallet_holdings SET quantity=quantity-$1
+        WHERE wallet_id=$2 AND symbol=$3
+      `, [q, req.wallet.id, from]);
+    }
+
+    await client.query(`
+      INSERT INTO wallet_holdings(wallet_id,symbol,quantity)
+      VALUES($1,$2,$3)
+      ON CONFLICT(wallet_id,symbol) DO UPDATE SET
+        quantity=wallet_holdings.quantity+EXCLUDED.quantity
+    `, [req.wallet.id, to, got]);
+
+    // note holds "<target symbol>:<amount received>"
+    await client.query(`
+      INSERT INTO wallet_txs(wallet_id,kind,symbol,quantity,coins,note)
+      VALUES($1,'swap',$2,$3,0,$4)
+    `, [req.wallet.id, from, q, `${to}:${got}`]);
+  });
+
+  res.json({
+    msg: `Exchanged ${q.toPrecision(5)} ${from} for ${got.toPrecision(5)} ${to}`
+  });
+}));
+
 app.get('/api/wallet/history', auth, walletAuth, route(async (req, res) => {
   const r = await pool.query(`
     SELECT id, kind, symbol, quantity, coins, note, created_at

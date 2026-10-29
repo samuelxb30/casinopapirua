@@ -80,6 +80,9 @@
 .exo-quick{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin:-2px 0 10px}
 .exo-quick button{background:#ffffff14;border:0;color:#e8e6ff;padding:8px 0;border-radius:9px;font-size:12px;font-weight:600;cursor:pointer}
 .exo-quick button:hover{background:#ffffff26}
+.exo-flip{display:block;margin:-2px auto 8px;background:#ffffff14;border:0;color:#e8e6ff;width:38px;height:38px;border-radius:50%;font-size:18px;cursor:pointer}
+.exo-flip:hover{background:#ffffff26}
+.exo-rate{color:#9a9ed0;font-size:12px;margin-top:2px}
 .exo-lbl{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#9a9ed0;margin:0 0 4px}
 .exo-est{color:#c9c6f5;font-size:13px;margin:4px 0 12px;min-height:38px}
 .exo-est b{color:#fff}
@@ -89,7 +92,7 @@
 .exo-tx .t b{display:block;font-size:14px}
 .exo-tx .t span{font-size:12px;color:#9a9ed0}
 .exo-empty{padding:30px 10px;text-align:center;color:#9a9ed0}
-.exo-nav{flex:none;margin:6px 16px 14px;background:#20224bd0;border:1px solid #ffffff14;border-radius:99px;padding:6px;display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
+.exo-nav{flex:none;margin:6px 12px 14px;background:#20224bd0;border:1px solid #ffffff14;border-radius:99px;padding:6px;display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
 .exo-nav button{background:transparent;border:0;color:#b9b3e8;border-radius:99px;padding:9px 0;cursor:pointer;font-size:12px;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:1px}
 .exo-nav button span{font-size:19px;line-height:1}
 .exo-nav button.on{background:#ffffff1f;color:#fff}
@@ -136,7 +139,9 @@
     me: null,
     pending: null,
     busy: false,
-    hist: null
+    hist: null,
+    from: 'BTC',
+    to: 'ETH'
   };
 
   let toastTimer = null;
@@ -323,7 +328,7 @@
           '<button class="exo-iconbtn" data-act="close" aria-label="Close wallet">✕</button>' +
         '</div>' +
         '<div class="exo-body" id="exoBody"></div>' +
-        '<div class="exo-nav">' + nav('portfolio', '👛', 'Wallet') + nav('trade', '⇄', 'Trade') + nav('history', '🕘', 'History') + '</div>' +
+        '<div class="exo-nav">' + nav('portfolio', '👛', 'Wallet') + nav('trade', '$', 'Trade') + nav('exchange', '⇄', 'Exchange') + nav('history', '🕘', 'History') + '</div>' +
       '</div>';
 
     $('exoWName').innerHTML = esc(S.me.name) + '<small>Game wallet</small>';
@@ -340,6 +345,8 @@
         '<div id="exoList"></div>';
     } else if (S.view === 'trade') {
       renderTrade();
+    } else if (S.view === 'exchange') {
+      renderExchange();
     } else {
       renderHistory();
     }
@@ -373,6 +380,7 @@
     }
 
     if (S.view === 'trade') estimate();
+    if (S.view === 'exchange') estimateX();
   }
 
   function renderTrade() {
@@ -437,6 +445,58 @@
     }
   }
 
+
+  // ---------- exchange (asset <-> asset) ----------
+  function renderExchange() {
+    const body = $('exoBody');
+    const opts = sel => S.me.assets.map(a =>
+      '<option value="' + a.sym + '"' + (a.sym === sel ? ' selected' : '') + '>' + esc(a.name) + ' (' + a.sym + ')</option>').join('');
+
+    body.innerHTML =
+      '<div class="exo-lbl">From</div>' +
+      '<div class="exo-f"><select id="exoXFrom" data-change="xfrom">' + opts(S.from) + '</select></div>' +
+      '<button class="exo-flip" data-act="flip" aria-label="Swap direction" title="Swap direction">⇅</button>' +
+      '<div class="exo-lbl">To</div>' +
+      '<div class="exo-f"><select id="exoXTo" data-change="xto">' + opts(S.to) + '</select></div>' +
+      '<div class="exo-lbl">Percent of your holding to exchange</div>' +
+      '<div class="exo-f"><input id="exoXAmt" type="number" min="1" max="100" step="1" value="100" data-input="xamt" data-enter="xgo"></div>' +
+      '<div class="exo-quick">' +
+        [25, 50, 75, 100].map(v => '<button data-act="xquick" data-v="' + v + '">' + v + '%</button>').join('') +
+      '</div>' +
+      '<div class="exo-est" id="exoXEst"></div>' +
+      '<button class="exo-primary" id="exoXGo" data-act="xgo">Exchange</button>' +
+      '<div class="exo-info">Fee 0.5% · swaps happen inside this wallet at the live price</div>';
+
+    estimateX();
+  }
+
+  function estimateX() {
+    const el = $('exoXEst');
+    if (!el || !S.me) return;
+
+    const a = asset(S.from);
+    const b = asset(S.to);
+    if (!a || !b) return;
+
+    const v = parseFloat($('exoXAmt') ? $('exoXAmt').value : '') || 0;
+    const go = $('exoXGo');
+    if (go) go.textContent = 'Exchange ' + a.sym + ' → ' + b.sym;
+
+    const rate = a.price * (1 - S.me.fee) / b.price;
+    let html = '<span class="exo-rate">1 ' + a.sym + ' ≈ ' + fq(rate) + ' ' + b.sym + '</span><br>';
+
+    if (S.from === S.to) {
+      html = 'Pick two different assets.';
+    } else if (a.qty <= 0) {
+      html += 'This wallet holds no ' + a.name + '.';
+    } else {
+      const q = a.qty * Math.min(v, 100) / 100;
+      html += 'Exchange <b>' + fq(q) + ' ' + a.sym + '</b> for ≈ <b>' + fq(q * rate) + ' ' + b.sym + '</b>' +
+        '<br>You hold ' + fq(a.qty) + ' ' + a.sym;
+    }
+    el.innerHTML = html;
+  }
+
   async function loadHistory() {
     const d = await api('history');
     if (!d) return;
@@ -468,6 +528,10 @@
       } else if (t.kind === 'sell') {
         icon = '💸'; title = 'Cashed out ' + fq(t.qty) + ' ' + t.sym;
         sub = '+🪙 ' + fmt(t.coins) + ' to ' + esc(t.note);
+      } else if (t.kind === 'swap') {
+        const parts = String(t.note).split(':');
+        icon = '🔄'; title = 'Exchanged ' + fq(t.qty) + ' ' + t.sym;
+        sub = 'for ' + fq(Number(parts[1]) || 0) + ' ' + esc(parts[0]);
       } else if (t.kind === 'send') {
         icon = '📤'; title = 'Sent ' + fq(t.qty) + ' ' + t.sym;
         sub = 'to wallet ' + esc(t.note);
@@ -594,6 +658,29 @@
       estimate();
     },
 
+    flip() {
+      const f = S.from; S.from = S.to; S.to = f;
+      renderExchange();
+    },
+
+    xquick(el) {
+      $('exoXAmt').value = Number(el.dataset.v);
+      estimateX();
+    },
+
+    async xgo() {
+      if (S.from === S.to) return toast('Pick two different assets');
+      const v = parseFloat($('exoXAmt').value);
+      if (!(v > 0 && v <= 100)) return toast('Enter a percent from 1 to 100');
+
+      const d = await act('swap', { from: S.from, to: S.to, percent: v });
+      if (!d) return;
+
+      toast(d.msg);
+      S.hist = null;
+      await refresh();
+    },
+
     async go() {
       const v = parseFloat($('exoAmt').value);
       if (!(v > 0)) return toast('Enter an amount');
@@ -637,12 +724,15 @@
 
   panel.addEventListener('input', e => {
     if (e.target.dataset && e.target.dataset.input === 'amt') estimate();
+    if (e.target.dataset && e.target.dataset.input === 'xamt') estimateX();
   });
 
   panel.addEventListener('change', e => {
     const t = e.target;
     if (!t.dataset) return;
     if (t.dataset.change === 'sym') { S.sym = t.value; estimate(); }
+    if (t.dataset.change === 'xfrom') { S.from = t.value; estimateX(); }
+    if (t.dataset.change === 'xto') { S.to = t.value; estimateX(); }
     if (t.dataset.change === 'saved') $('exoContinue').disabled = !t.checked;
   });
 
