@@ -260,6 +260,61 @@ async function initDatabase() {
     DELETE FROM auto_orders WHERE profit_target IS NULL AND loss_limit IS NULL
   `);
 
+  // ----- Chat (separate accounts from the casino) -----
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS chat_users (
+      id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      username TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
+      last_seen TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS chat_users_username_lower_idx
+    ON chat_users (LOWER(username))
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS chat_sessions (
+      token TEXT PRIMARY KEY,
+      user_id BIGINT NOT NULL REFERENCES chat_users(id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS chat_messages (
+      id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      sender_id BIGINT NOT NULL REFERENCES chat_users(id) ON DELETE CASCADE,
+      recipient_id BIGINT REFERENCES chat_users(id) ON DELETE CASCADE,
+      body TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS chat_messages_public_idx
+    ON chat_messages (id DESC) WHERE recipient_id IS NULL
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS chat_messages_pair_idx
+    ON chat_messages (sender_id, recipient_id, id DESC)
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS chat_messages_recipient_idx
+    ON chat_messages (recipient_id, sender_id, id DESC)
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS chat_sessions_user_idx ON chat_sessions(user_id)
+  `);
+  // peer_id 0 = the public chat
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS chat_reads (
+      user_id BIGINT NOT NULL REFERENCES chat_users(id) ON DELETE CASCADE,
+      peer_id BIGINT NOT NULL DEFAULT 0,
+      last_read_id BIGINT NOT NULL DEFAULT 0,
+      PRIMARY KEY (user_id, peer_id)
+    )
+  `);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS site_settings (
       key TEXT PRIMARY KEY,
@@ -1364,9 +1419,9 @@ async function saveTrade(userId, sym, side, qty, price) {
   `, [userId, sym, side, qty, price]);
 }
 
-// Profit/loss you would actually realize if you sold right now (after the fee).
-const realizablePnl = (qty, cost, price) =>
-  Math.floor(qty * price * (1 - FEE)) - cost;
+// Profit/loss as shown in the portfolio table: current value minus what you
+// paid (the buy fee is already part of what you paid).
+const realizablePnl = (qty, cost, price) => qty * price - cost;
 
 let autoSellRunning = false;
 
@@ -1714,7 +1769,7 @@ app.post('/api/trade', auth, route(async (req, res) => {
 // ---------- Auto-sell settings ----------
 // "target" = sell once your profit reaches this many coins (e.g. 300000).
 // "stop"   = sell once your loss reaches this many coins (optional).
-// (profit / loss are accepted as aliases.) Profit is measured after the fee.
+// (profit / loss are accepted as aliases.) Profit = value now minus cost, same as the portfolio P&L.
 
 app.post('/api/auto-sell', auth, route(async (req, res) => {
   const { sym } = req.body || {};
@@ -1860,6 +1915,461 @@ app.post('/api/shop/sell', auth, route(async (req, res) => {
     balance: await getBal(uid),
     msg: `Sold ${item.name}`,
     refund
+  });
+}));
+
+// ---------- Chat (Telegram-style messenger) ----------
+
+const CHAT_MAX_LEN = 1000;
+const CHAT_NAME_RE = /^[a-zA-Z0-9_]{3,16}$/;
+const CHAT_RESERVED = new Set(['public']);
+
+// userId (string) -> Set of open SSE responses
+const chatClients = new Map();
+const chatOfflineTimers = new Map();
+const chatRate = new Map();
+
+const chatOnline = id => {
+  const set = chatClients.get(String(id));
+  return !!(set && set.size);
+};
+
+function chatPush(res, event, data) {
+  try {
+    res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
+  } catch (err) { /* connection already closed */ }
+}
+
+function chatDeliver(userIds, event, data) {
+  for (const id of new Set(userIds.map(String))) {
+    const set = chatClients.get(id);
+    if (set) for (const res of set) chatPush(res, event, data);
+  }
+}
+
+function chatBroadcast(event, data) {
+  for (const set of chatClients.values())
+    for (const res of set) chatPush(res, event, data);
+}
+
+// Max 15 messages per 10 seconds per user.
+function chatRateOk(uid) {
+  const now = Date.now();
+  const recent = (chatRate.get(uid) || []).filter(t => now - t < 10000);
+  if (recent.length >= 15) {
+    chatRate.set(uid, recent);
+    return false;
+  }
+  recent.push(now);
+  chatRate.set(uid, recent);
+  return true;
+}
+
+setInterval(() => {
+  const now = Date.now();
+  for (const [uid, list] of chatRate) {
+    if (!list.some(t => now - t < 10000)) chatRate.delete(uid);
+  }
+}, 60000).unref();
+
+const CHAT_SELECT = `
+  SELECT m.id, m.body, m.created_at,
+         s.username AS sender_name, r.username AS recipient_name
+  FROM chat_messages m
+  JOIN chat_users s ON s.id = m.sender_id
+  LEFT JOIN chat_users r ON r.id = m.recipient_id
+`;
+
+const chatMsg = r => ({
+  id: Number(r.id),
+  from: r.sender_name,
+  to: r.recipient_name || 'public',
+  text: r.body,
+  ts: new Date(r.created_at).toISOString()
+});
+
+async function chatFindUser(name) {
+  if (typeof name !== 'string' || !CHAT_NAME_RE.test(name)) return null;
+  const r = await pool.query(
+    'SELECT id, username, last_seen FROM chat_users WHERE LOWER(username)=LOWER($1)',
+    [name]
+  );
+  return r.rows[0] || null;
+}
+
+const chatAuth = route(async (req, res, next) => {
+  const token = req.headers.authorization || '';
+  if (!token || token.length > 200) return fail(res, 'Please log in to chat', 401);
+
+  const r = await pool.query(`
+    SELECT u.id, u.username
+    FROM chat_sessions s
+    JOIN chat_users u ON u.id = s.user_id
+    WHERE s.token = $1
+  `, [token]);
+
+  if (!r.rows.length) return fail(res, 'Please log in to chat', 401);
+
+  req.chatUser = r.rows[0];
+  next();
+});
+
+async function chatNewSession(uid) {
+  const token = crypto.randomBytes(32).toString('hex');
+  await pool.query(
+    'INSERT INTO chat_sessions(token,user_id) VALUES($1,$2)',
+    [token, uid]
+  );
+  return token;
+}
+
+app.post('/api/chat/register', route(async (req, res) => {
+  const { username, password } = req.body || {};
+
+  if (typeof username !== 'string' || !CHAT_NAME_RE.test(username))
+    return fail(res, 'Username: 3-16 letters, numbers or _');
+
+  if (CHAT_RESERVED.has(username.toLowerCase()))
+    return fail(res, 'That username is reserved');
+
+  if (typeof password !== 'string' || password.length < 6 || password.length > 200)
+    return fail(res, 'Password must be 6-200 characters');
+
+  const salt = crypto.randomBytes(16).toString('hex');
+  const passwordHash = `${salt}:${hashPw(password, salt)}`;
+
+  let uid;
+  try {
+    const r = await pool.query(
+      'INSERT INTO chat_users(username,password_hash) VALUES($1,$2) RETURNING id',
+      [username, passwordHash]
+    );
+    uid = r.rows[0].id;
+  } catch (err) {
+    if (err.code === '23505') return fail(res, 'Username already taken');
+    throw err;
+  }
+
+  // New users start with the public chat marked as read.
+  await pool.query(`
+    INSERT INTO chat_reads(user_id,peer_id,last_read_id)
+    SELECT $1::bigint, 0, COALESCE(MAX(id), 0)
+    FROM chat_messages WHERE recipient_id IS NULL
+  `, [uid]);
+
+  res.json({ token: await chatNewSession(uid) });
+}));
+
+app.post('/api/chat/login', route(async (req, res) => {
+  const { username, password } = req.body || {};
+
+  const r = await pool.query(
+    'SELECT * FROM chat_users WHERE LOWER(username)=LOWER($1)',
+    [typeof username === 'string' ? username : '']
+  );
+  const u = r.rows[0];
+
+  if (!u || typeof password !== 'string')
+    return fail(res, 'Wrong username or password', 401);
+
+  const stored = String(u.password_hash || '');
+  const sep = stored.indexOf(':');
+  if (sep < 1) return fail(res, 'Wrong username or password', 401);
+
+  const a = Buffer.from(stored.slice(sep + 1), 'hex');
+  const b = Buffer.from(hashPw(password, stored.slice(0, sep)), 'hex');
+
+  if (a.length !== b.length || !crypto.timingSafeEqual(a, b))
+    return fail(res, 'Wrong username or password', 401);
+
+  res.json({ token: await chatNewSession(u.id) });
+}));
+
+app.post('/api/chat/logout', chatAuth, route(async (req, res) => {
+  await pool.query(
+    'DELETE FROM chat_sessions WHERE token=$1',
+    [req.headers.authorization]
+  );
+  res.json({});
+}));
+
+app.get('/api/chat/me', chatAuth, route(async (req, res) => {
+  res.json({ id: Number(req.chatUser.id), username: req.chatUser.username });
+}));
+
+// Live updates (Server-Sent Events): new messages and online status.
+app.get('/api/chat/stream', chatAuth, (req, res) => {
+  const uid = String(req.chatUser.id);
+  const name = req.chatUser.username;
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no'
+  });
+  res.write('retry: 3000\n\n');
+
+  clearTimeout(chatOfflineTimers.get(uid));
+  chatOfflineTimers.delete(uid);
+
+  let set = chatClients.get(uid);
+  if (!set) {
+    set = new Set();
+    chatClients.set(uid, set);
+  }
+  const wasOffline = set.size === 0;
+  set.add(res);
+
+  if (wasOffline) chatBroadcast('presence', { username: name, online: true });
+
+  const heartbeat = setInterval(() => {
+    try { res.write(': ping\n\n'); } catch (err) { /* closing */ }
+  }, 25000);
+
+  req.on('close', () => {
+    clearInterval(heartbeat);
+    set.delete(res);
+
+    if (set.size === 0) {
+      // Short grace period so page reloads don't flicker "offline".
+      chatOfflineTimers.set(uid, setTimeout(async () => {
+        const current = chatClients.get(uid);
+        if (current && current.size) return;
+        chatClients.delete(uid);
+        chatOfflineTimers.delete(uid);
+
+        let lastSeen = new Date().toISOString();
+        try {
+          const r = await pool.query(
+            'UPDATE chat_users SET last_seen=NOW() WHERE id=$1 RETURNING last_seen',
+            [uid]
+          );
+          if (r.rows[0]) lastSeen = new Date(r.rows[0].last_seen).toISOString();
+        } catch (err) { /* keep fallback */ }
+
+        chatBroadcast('presence', { username: name, online: false, lastSeen });
+      }, 5000));
+    }
+  });
+});
+
+// Chat list: the public chat plus every private conversation.
+app.get('/api/chat/dialogs', chatAuth, route(async (req, res) => {
+  const me = req.chatUser;
+
+  const pubLast = await pool.query(
+    `${CHAT_SELECT} WHERE m.recipient_id IS NULL ORDER BY m.id DESC LIMIT 1`
+  );
+  const pubUnread = await pool.query(`
+    SELECT COUNT(*) AS n FROM chat_messages
+    WHERE recipient_id IS NULL AND sender_id <> $1::bigint
+      AND id > COALESCE(
+        (SELECT last_read_id FROM chat_reads
+         WHERE user_id=$1::bigint AND peer_id=0), 0)
+  `, [me.id]);
+
+  const priv = await pool.query(`
+    SELECT c.peer_id, u.username, u.last_seen,
+           m.id AS last_id, m.body, m.created_at,
+           (m.sender_id = $1::bigint) AS mine,
+           (SELECT COUNT(*) FROM chat_messages x
+             WHERE x.sender_id = c.peer_id AND x.recipient_id = $1::bigint
+               AND x.id > COALESCE(
+                 (SELECT r.last_read_id FROM chat_reads r
+                  WHERE r.user_id = $1::bigint AND r.peer_id = c.peer_id), 0)
+           ) AS unread
+    FROM (
+      SELECT CASE WHEN sender_id = $1::bigint THEN recipient_id ELSE sender_id END AS peer_id,
+             MAX(id) AS last_id
+      FROM chat_messages
+      WHERE recipient_id IS NOT NULL
+        AND (sender_id = $1::bigint OR recipient_id = $1::bigint)
+      GROUP BY 1
+    ) c
+    JOIN chat_users u ON u.id = c.peer_id
+    JOIN chat_messages m ON m.id = c.last_id
+    ORDER BY c.last_id DESC
+    LIMIT 100
+  `, [me.id]);
+
+  const pl = pubLast.rows[0];
+
+  res.json({
+    public: {
+      last: pl ? {
+        id: Number(pl.id),
+        from: pl.sender_name,
+        text: pl.body,
+        ts: new Date(pl.created_at).toISOString(),
+        mine: pl.sender_name === me.username
+      } : null,
+      unread: Number(pubUnread.rows[0].n)
+    },
+    chats: priv.rows.map(r => ({
+      name: r.username,
+      online: chatOnline(r.peer_id),
+      lastSeen: new Date(r.last_seen).toISOString(),
+      unread: Number(r.unread),
+      last: {
+        id: Number(r.last_id),
+        from: r.mine ? me.username : r.username,
+        text: r.body,
+        ts: new Date(r.created_at).toISOString(),
+        mine: !!r.mine
+      }
+    }))
+  });
+}));
+
+// Message history, newest page first. Use ?before=<id> to page back.
+app.get('/api/chat/history', chatAuth, route(async (req, res) => {
+  const me = req.chatUser;
+  const peer = String(req.query.peer || '');
+  const before = Number(req.query.before) || 0;
+  const limit = Math.min(Math.max(parseInt(req.query.limit, 10) || 50, 1), 100);
+
+  const params = [];
+  let where;
+  let peerInfo = null;
+
+  if (peer === 'public') {
+    where = 'm.recipient_id IS NULL';
+  } else {
+    const p = await chatFindUser(peer);
+    if (!p) return fail(res, 'User not found', 404);
+    params.push(me.id, p.id);
+    where = `((m.sender_id=$1::bigint AND m.recipient_id=$2::bigint)
+           OR (m.sender_id=$2::bigint AND m.recipient_id=$1::bigint))`;
+    peerInfo = {
+      name: p.username,
+      online: chatOnline(p.id),
+      lastSeen: new Date(p.last_seen).toISOString()
+    };
+  }
+
+  if (before > 0) {
+    params.push(before);
+    where += ` AND m.id < $${params.length}::bigint`;
+  }
+
+  params.push(limit + 1);
+
+  const r = await pool.query(
+    `${CHAT_SELECT} WHERE ${where} ORDER BY m.id DESC LIMIT $${params.length}`,
+    params
+  );
+
+  const more = r.rows.length > limit;
+  const rows = r.rows.slice(0, limit).reverse();
+
+  res.json({ peer: peerInfo, more, messages: rows.map(chatMsg) });
+}));
+
+app.post('/api/chat/send', chatAuth, route(async (req, res) => {
+  const me = req.chatUser;
+  const { to } = req.body || {};
+  let text = (req.body || {}).text;
+
+  if (typeof text !== 'string') return fail(res, 'Message is empty');
+  text = text.replace(/\r\n?/g, '\n').trim();
+
+  if (!text) return fail(res, 'Message is empty');
+  if (text.length > CHAT_MAX_LEN)
+    return fail(res, `Message is too long (max ${CHAT_MAX_LEN} characters)`);
+
+  if (!chatRateOk(String(me.id)))
+    return fail(res, 'Slow down, you are sending too fast', 429);
+
+  let recipient = null;
+
+  if (to !== 'public') {
+    recipient = await chatFindUser(to);
+    if (!recipient) return fail(res, 'User not found', 404);
+    if (String(recipient.id) === String(me.id))
+      return fail(res, "You can't message yourself");
+  }
+
+  const ins = await pool.query(`
+    INSERT INTO chat_messages(sender_id,recipient_id,body)
+    VALUES($1,$2,$3)
+    RETURNING id, created_at
+  `, [me.id, recipient ? recipient.id : null, text]);
+
+  const message = {
+    id: Number(ins.rows[0].id),
+    from: me.username,
+    to: recipient ? recipient.username : 'public',
+    text,
+    ts: new Date(ins.rows[0].created_at).toISOString()
+  };
+
+  if (recipient) chatDeliver([me.id, recipient.id], 'message', message);
+  else chatBroadcast('message', message);
+
+  res.json({ message });
+}));
+
+app.post('/api/chat/read', chatAuth, route(async (req, res) => {
+  const me = req.chatUser;
+  const peer = String((req.body || {}).peer || '');
+
+  let peerId;
+  let maxRes;
+
+  if (peer === 'public') {
+    peerId = 0;
+    maxRes = await pool.query(
+      'SELECT COALESCE(MAX(id),0) AS m FROM chat_messages WHERE recipient_id IS NULL'
+    );
+  } else {
+    const p = await chatFindUser(peer);
+    if (!p) return fail(res, 'User not found', 404);
+    peerId = p.id;
+    maxRes = await pool.query(
+      `SELECT COALESCE(MAX(id),0) AS m FROM chat_messages
+       WHERE sender_id=$1 AND recipient_id=$2`,
+      [p.id, me.id]
+    );
+  }
+
+  await pool.query(`
+    INSERT INTO chat_reads(user_id,peer_id,last_read_id)
+    VALUES($1,$2,$3)
+    ON CONFLICT(user_id,peer_id) DO UPDATE SET
+      last_read_id = GREATEST(chat_reads.last_read_id, EXCLUDED.last_read_id)
+  `, [me.id, peerId, maxRes.rows[0].m]);
+
+  res.json({ ok: true });
+}));
+
+// Find people by the start of their username.
+app.get('/api/chat/users/search', chatAuth, route(async (req, res) => {
+  const q = String(req.query.q || '').trim().slice(0, 16);
+  if (q.length < 2) return res.json({ users: [] });
+
+  const escaped = q.replace(/[\\%_]/g, '\\$&');
+
+  const r = await pool.query(`
+    SELECT id, username FROM chat_users
+    WHERE LOWER(username) LIKE LOWER($1) AND id <> $2
+    ORDER BY username LIMIT 8
+  `, [escaped + '%', req.chatUser.id]);
+
+  res.json({
+    users: r.rows.map(u => ({ name: u.username, online: chatOnline(u.id) }))
+  });
+}));
+
+// Look up one user by exact name.
+app.get('/api/chat/user', chatAuth, route(async (req, res) => {
+  const p = await chatFindUser(String(req.query.name || ''));
+  if (!p) return fail(res, 'User not found', 404);
+
+  res.json({
+    name: p.username,
+    online: chatOnline(p.id),
+    lastSeen: new Date(p.last_seen).toISOString()
   });
 }));
 

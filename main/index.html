@@ -184,6 +184,134 @@ td input{width:110px}
 .shop-item .owned-tag{color:var(--g);font-weight:800;font-size:12px;margin-bottom:8px}
 .shop-item.cant .shop-price{color:var(--mut)}
 .shop-empty{grid-column:1/-1;text-align:center;color:var(--mut);padding:40px 10px;border:1px dashed var(--line);border-radius:14px}
+/* Telegram-style chat */
+.tg-launcher{position:fixed;left:18px;bottom:18px;z-index:25;width:58px;height:58px;border-radius:50%;border:0;background:linear-gradient(150deg,#52a8f0,#2481cc);color:#fff;cursor:pointer;box-shadow:0 6px 20px #0009;display:flex;align-items:center;justify-content:center;padding:0;transition:transform .15s}
+.tg-launcher:hover{transform:scale(1.07)}
+.tg-launcher:focus-visible,.tg-panel button:focus-visible{outline:2px solid #6ab3f3;outline-offset:2px}
+.tg-launcher svg{width:30px;height:30px;margin-left:2px}
+.tg-badge{position:absolute;top:-5px;right:-5px;min-width:22px;height:22px;padding:0 6px;border-radius:11px;background:#e53935;color:#fff;font:700 12px/1 system-ui,sans-serif;display:flex;align-items:center;justify-content:center;border:2px solid #0b0e17}
+.tg-panel{position:fixed;left:18px;bottom:88px;z-index:25;width:min(800px,calc(100vw - 36px));height:min(620px,calc(100vh - 110px));background:#0e1621;border:1px solid #0b1118;border-radius:12px;overflow:hidden;box-shadow:0 14px 50px #000b;color:#f5f5f5;font:14px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex}
+.tg-panel *{box-sizing:border-box}
+.tg-panel button{font-family:inherit}
+.tg-panel input,.tg-panel textarea{width:100%;font-family:inherit}
+.tg-ico{width:24px;height:24px;fill:currentColor;flex:none}
+.tg-iconbtn{background:transparent;border:0;color:#7f91a4;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex:none}
+.tg-iconbtn:hover{background:#ffffff14;color:#cfd8e3}
+
+/* sign in */
+.tg-auth{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;background:#17212b;position:relative;text-align:center}
+.tg-auth .tg-close{position:absolute;top:10px;right:10px}
+.tg-logo{width:104px;height:104px;border-radius:50%;background:linear-gradient(150deg,#52a8f0,#2481cc);display:flex;align-items:center;justify-content:center;margin-bottom:18px;color:#fff}
+.tg-logo svg{width:54px;height:54px;margin-left:4px}
+.tg-auth h3{margin:0 0 6px;font-size:26px;font-weight:700}
+.tg-auth p{margin:0 0 20px;color:#7f91a4;max-width:290px}
+.tg-form{width:290px;max-width:100%;text-align:left}
+.tg-tabs{display:flex;gap:4px;margin-bottom:14px;background:#0e1621;border-radius:10px;padding:3px}
+.tg-tabs button{flex:1;background:transparent;border:0;color:#7f91a4;padding:8px;border-radius:8px;font-weight:600;font-size:14px;cursor:pointer}
+.tg-tabs button.on{background:#2b5278;color:#fff}
+.tg-field{margin-bottom:12px}
+.tg-field input{background:#0e1621;border:1px solid #2b3a4a;color:#f5f5f5;padding:12px 14px;border-radius:10px;font-size:15px;outline:0}
+.tg-field input:focus{border-color:#3390ec}
+.tg-field input::placeholder{color:#5d7081}
+.tg-primary{width:100%;background:#3390ec;color:#fff;border:0;border-radius:10px;padding:13px;font-size:15px;font-weight:700;cursor:pointer}
+.tg-primary:hover{background:#2f85dc}
+.tg-primary:disabled{opacity:.5;cursor:not-allowed}
+.tg-hint{margin:12px 0 0;font-size:12px;color:#5d7081;text-align:center}
+
+/* app shell */
+.tg-app{flex:1;display:flex;min-width:0;min-height:0}
+.tg-side{width:310px;flex:none;background:#17212b;border-right:1px solid #0b1118;display:flex;flex-direction:column;min-height:0}
+.tg-side-head{display:flex;align-items:center;gap:6px;padding:8px 10px;position:relative}
+.tg-search{position:relative;flex:1}
+.tg-search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:20px;height:20px;fill:#5d7081}
+.tg-search input{background:#242f3d;border:1px solid transparent;color:#f5f5f5;border-radius:20px;padding:9px 14px 9px 38px;font-size:14px;outline:0;height:38px}
+.tg-search input:focus{border-color:#3390ec;background:#17212b}
+.tg-search input::placeholder{color:#6d7f92}
+.tg-side-close{display:none}
+.tg-menu{position:absolute;top:50px;left:10px;z-index:5;min-width:200px;background:#1f2b38;border:1px solid #0b1118;border-radius:10px;padding:6px;box-shadow:0 8px 26px #000a}
+.tg-menu-me{padding:8px 10px;color:#7f91a4;font-size:13px;border-bottom:1px solid #0b1118;margin-bottom:4px}
+.tg-menu-me b{color:#f5f5f5}
+.tg-menu button{width:100%;text-align:left;background:transparent;border:0;color:#f5f5f5;padding:9px 10px;border-radius:7px;cursor:pointer;font-size:14px}
+.tg-menu button:hover{background:#ffffff14}
+.tg-list{flex:1;overflow-y:auto;min-height:0;scrollbar-width:thin;scrollbar-color:#2b3a4a transparent}
+.tg-section{padding:10px 16px 6px;color:#6ab3f3;font-weight:700;font-size:13px}
+.tg-item{display:flex;gap:11px;padding:9px 12px;cursor:pointer;align-items:center}
+.tg-item:hover{background:#202b36}
+.tg-item.active{background:#2b5278}
+.tg-ava{width:50px;height:50px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px;color:#fff;position:relative}
+.tg-ava.sm{width:40px;height:40px;font-size:17px}
+.tg-ava.xs{width:32px;height:32px;font-size:14px}
+.tg-ava.pub{background:linear-gradient(160deg,#52a8f0,#2481cc)}
+.tg-ava .dot{position:absolute;right:0;bottom:0;width:13px;height:13px;border-radius:50%;background:#4cc764;border:2.5px solid #17212b}
+.tg-item.active .tg-ava .dot{border-color:#2b5278}
+.tg-item-body{flex:1;min-width:0}
+.tg-item-top,.tg-item-bot{display:flex;align-items:center;gap:8px}
+.tg-item-name{flex:1;min-width:0;font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tg-item-time{font-size:12px;color:#7f91a4;flex:none}
+.tg-item.active .tg-item-time,.tg-item.active .tg-item-prev{color:#c5d8ec}
+.tg-item-prev{flex:1;min-width:0;color:#7f91a4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:14px}
+.tg-item-prev b{color:#6ab3f3;font-weight:500}
+.tg-item.active .tg-item-prev b{color:#fff}
+.tg-unread{flex:none;min-width:22px;height:22px;padding:0 7px;border-radius:11px;background:#3a8dd8;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.tg-item.active .tg-unread{background:#fff;color:#2b5278}
+.tg-none{padding:30px 20px;text-align:center;color:#7f91a4}
+
+/* conversation */
+.tg-main{flex:1;min-width:0;display:flex;flex-direction:column;position:relative;background:#0e1621;background-image:radial-gradient(circle at 20% 15%,#16263a 0,transparent 45%),radial-gradient(circle at 85% 85%,#122032 0,transparent 50%)}
+.tg-empty{flex:1;display:flex;align-items:center;justify-content:center;position:relative}
+.tg-empty span{background:#17212bcc;color:#9db0c3;padding:6px 16px;border-radius:16px;font-size:13px}
+.tg-empty .tg-close{position:absolute;top:10px;right:10px}
+.tg-chat{flex:1;display:flex;flex-direction:column;min-height:0}
+.tg-chat-head{display:flex;align-items:center;gap:10px;padding:7px 10px;background:#17212b;border-bottom:1px solid #0b1118;flex:none}
+.tg-back{display:none}
+.tg-chat-title{flex:1;min-width:0}
+.tg-chat-name{font-weight:700;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tg-chat-status{font-size:13px;color:#7f91a4}
+.tg-chat-status.on{color:#6ab3f3}
+.tg-msgs{flex:1;overflow-y:auto;min-height:0;padding:8px 14px 6px;display:flex;flex-direction:column;scrollbar-width:thin;scrollbar-color:#2b3a4a transparent}
+.tg-msgs::before{content:"";flex:1}
+.tg-day{align-self:center;background:#17212bcc;color:#c5d3e0;font-size:13px;font-weight:600;padding:3px 12px;border-radius:14px;margin:10px 0 6px}
+.tg-more{align-self:center;background:#17212bcc;color:#6ab3f3;border:0;font-size:13px;font-weight:600;padding:5px 14px;border-radius:14px;cursor:pointer;margin:4px 0 8px}
+.tg-row{display:flex;align-items:flex-end;gap:8px;margin-top:2px}
+.tg-row:not(.cont){margin-top:7px}
+.tg-row.out{justify-content:flex-end}
+.tg-ava-slot{width:32px;flex:none}
+.tg-bubble{position:relative;max-width:min(72%,470px);padding:6px 10px 6px;border-radius:15px;background:#182533;color:#f5f5f5;overflow-wrap:anywhere}
+.tg-row.out .tg-bubble{background:#2b5278}
+.tg-row.in.last .tg-bubble{border-bottom-left-radius:4px}
+.tg-row.out.last .tg-bubble{border-bottom-right-radius:4px}
+.tg-row.last .tg-bubble::after{content:"";position:absolute;bottom:0;width:9px;height:12px;background:inherit}
+.tg-row.in.last .tg-bubble::after{left:-8px;clip-path:polygon(100% 0,0 100%,100% 100%)}
+.tg-row.out.last .tg-bubble::after{right:-8px;clip-path:polygon(0 0,0 100%,100% 100%)}
+.tg-name{font-weight:700;font-size:13px;margin-bottom:2px;cursor:pointer}
+.tg-text{white-space:pre-wrap;font-size:15px;line-height:1.35}
+.tg-meta{float:right;margin:8px 0 -4px 12px;font-size:11px;color:#7f91a4;user-select:none}
+.tg-row.out .tg-meta{color:#8fb4dc}
+.tg-fab{position:absolute;right:16px;bottom:78px;width:42px;height:42px;border-radius:50%;background:#17212b;border:1px solid #0b1118;color:#9db0c3;box-shadow:0 3px 12px #0008;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+.tg-fab:hover{color:#fff}
+.tg-fab .tg-badge{top:-8px;right:-4px;border-color:#0e1621;background:#3a8dd8}
+.tg-compose{flex:none;padding:6px 12px 12px}
+.tg-compose-box{display:flex;align-items:flex-end;background:#17212b;border-radius:16px;padding:3px 4px 3px 16px}
+.tg-compose textarea{background:transparent;border:0;outline:0;color:#f5f5f5;font-size:15px;line-height:1.35;resize:none;max-height:120px;padding:10px 4px 10px 0;min-height:42px;scrollbar-width:thin}
+.tg-compose textarea::placeholder{color:#6d7f92}
+.tg-send{background:transparent;border:0;width:42px;height:42px;border-radius:50%;color:#6ab3f3;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex:none}
+.tg-send:hover{background:#ffffff14}
+.tg-send:disabled{color:#4a5a6a;cursor:default;background:transparent}
+.tg-hide-narrow{display:flex}
+
+@media(max-width:700px){
+  .tg-side{width:100%;border-right:0}
+  .tg-main{display:none}
+  .tg-app.in-chat .tg-side{display:none}
+  .tg-app.in-chat .tg-main{display:flex;flex:1}
+  .tg-back{display:flex}
+  .tg-side-close{display:flex}
+  .tg-chat-head .tg-close{display:none}
+}
+@media(max-width:520px){
+  .tg-panel{inset:0;left:0;bottom:0;width:100%;height:100%;border:0;border-radius:0}
+  .tg-launcher{left:12px;bottom:12px;width:52px;height:52px}
+}
 @media(prefers-reduced-motion:reduce){.announcement-track{animation-duration:90s}}
 @media(max-width:650px){
   header{padding:12px}
@@ -403,6 +531,80 @@ td input{width:110px}
 
   <div class="foot">Virtual currency with no cash value. For entertainment only.</div>
 </main>
+<!-- Telegram-style chat -->
+<button class="tg-launcher" id="tgLauncher" aria-label="Open chat" onclick="tgToggle()">
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+  <span class="tg-badge hide" id="tgBadge">0</span>
+</button>
+
+<div class="tg-panel hide" id="tgPanel" role="dialog" aria-label="Chat">
+  <!-- Sign in / register -->
+  <div class="tg-auth" id="tgAuth">
+    <button class="tg-iconbtn tg-close" onclick="tgToggle(false)" aria-label="Close chat"><svg class="tg-ico" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+    <div class="tg-logo"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"/></svg></div>
+    <h3>Royal Chat</h3>
+    <p>Message friends by username or join the public chat.</p>
+    <div class="tg-form">
+      <div class="tg-tabs">
+        <button id="tgTabLogin" class="on" onclick="tgAuthMode('login')">Log in</button>
+        <button id="tgTabReg" onclick="tgAuthMode('register')">Sign up</button>
+      </div>
+      <div class="tg-field"><input id="tgUser" placeholder="Username" maxlength="16" autocomplete="username" autocapitalize="off" spellcheck="false"></div>
+      <div class="tg-field"><input id="tgPass" type="password" placeholder="Password" autocomplete="current-password" onkeydown="if(event.key==='Enter')tgDoAuth()"></div>
+      <button class="tg-primary" id="tgAuthBtn" onclick="tgDoAuth()">Log in</button>
+      <p class="tg-hint">Chat accounts are separate from your casino account.</p>
+    </div>
+  </div>
+
+  <!-- Messenger -->
+  <div class="tg-app hide" id="tgApp">
+    <aside class="tg-side">
+      <div class="tg-side-head">
+        <button class="tg-iconbtn" id="tgMenuBtn" onclick="tgToggleMenu(event)" aria-label="Menu"><svg class="tg-ico" viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg></button>
+        <div class="tg-search">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.47 6.47 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input id="tgSearch" placeholder="Search or type a username" autocomplete="off" spellcheck="false" maxlength="16" oninput="tgSearchInput()" onkeydown="if(event.key==='Enter')tgSearchEnter()">
+        </div>
+        <button class="tg-iconbtn tg-side-close" onclick="tgToggle(false)" aria-label="Close chat"><svg class="tg-ico" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+        <div class="tg-menu hide" id="tgMenu">
+          <div class="tg-menu-me">Signed in as <b id="tgMeName"></b></div>
+          <button onclick="tgLogout()">Log out</button>
+        </div>
+      </div>
+      <div class="tg-list" id="tgList"></div>
+    </aside>
+
+    <section class="tg-main">
+      <div class="tg-empty" id="tgEmpty">
+        <button class="tg-iconbtn tg-close" onclick="tgToggle(false)" aria-label="Close chat"><svg class="tg-ico" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+        <span>Select a chat to start messaging</span>
+      </div>
+      <div class="tg-chat hide" id="tgChat">
+        <div class="tg-chat-head">
+          <button class="tg-iconbtn tg-back" onclick="tgBack()" aria-label="Back"><svg class="tg-ico" viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button>
+          <div id="tgHeadAva"></div>
+          <div class="tg-chat-title">
+            <div class="tg-chat-name" id="tgHeadName"></div>
+            <div class="tg-chat-status" id="tgHeadStatus"></div>
+          </div>
+          <button class="tg-iconbtn tg-close" onclick="tgToggle(false)" aria-label="Close chat"><svg class="tg-ico" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
+        </div>
+        <div class="tg-msgs" id="tgMsgs" aria-live="polite"></div>
+        <button class="tg-fab hide" id="tgFab" onclick="tgScrollBottom(true)" aria-label="Scroll to latest message">
+          <svg class="tg-ico" viewBox="0 0 24 24"><path d="M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z"/></svg>
+          <span class="tg-badge hide" id="tgFabBadge">0</span>
+        </button>
+        <div class="tg-compose">
+          <div class="tg-compose-box">
+            <textarea id="tgInput" rows="1" placeholder="Message" maxlength="1000" oninput="tgInputChanged()" onkeydown="tgInputKey(event)"></textarea>
+            <button class="tg-send" id="tgSend" onclick="tgSend()" disabled aria-label="Send"><svg class="tg-ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M2.01 21 23 12 2.01 3 2 10l15 2-15 2z"/></svg></button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</div>
+
 <div id="toast"></div>
 
 <script>
@@ -1190,6 +1392,608 @@ async function shopSell(item,refund){
   await loadShop();
 }
 
+// ===== Telegram-style chat =====
+const TG_COLORS=['#e17076','#faa774','#a695e7','#7bc862','#6ec9cb','#65aadd','#ee7aae'];
+let tgToken=localStorage.tgToken||null,tgMe=null,tgMode='login',tgPanelOpen=false;
+let tgKey=null,tgStreamCtl=null,tgSearchSeq=0,tgSearchTimer=null,tgSearchRes=[],tgNewBelow=0,tgSending=false;
+const tgDialogs=new Map(),tgHist=new Map();
+
+function tgEl(tag,cls,text){
+  const e=document.createElement(tag);
+  if(cls)e.className=cls;
+  if(text!=null)e.textContent=text;
+  return e;
+}
+
+async function tgApi(path,body){
+  try{
+    const r=await fetch('/api/chat/'+path,{
+      method:body?'POST':'GET',
+      headers:{'Content-Type':'application/json',Authorization:tgToken||''},
+      body:body?JSON.stringify(body):undefined
+    });
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok){
+      if(r.status===401&&tgToken)tgLogout(true);
+      else toast(d.error||'Chat error');
+      return null;
+    }
+    return d;
+  }catch(e){
+    return null;
+  }
+}
+
+function tgColor(name){
+  let h=0;
+  for(const ch of name)h=(h*31+ch.charCodeAt(0))>>>0;
+  return TG_COLORS[h%TG_COLORS.length];
+}
+
+function tgAvatar(name,size,isPublic,online){
+  const a=tgEl('div','tg-ava'+(size?' '+size:''));
+  if(isPublic){
+    a.classList.add('pub');
+    a.textContent='👥';
+  }else{
+    const c=tgColor(name);
+    a.style.background=`linear-gradient(160deg,${c},${c}aa)`;
+    a.textContent=name.charAt(0).toUpperCase();
+  }
+  if(online)a.appendChild(tgEl('span','dot'));
+  return a;
+}
+
+const tgTime=ts=>new Date(ts).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+const tgSameDay=(a,b)=>new Date(a).toDateString()===new Date(b).toDateString();
+
+function tgDayLabel(ts){
+  const d=new Date(ts),n=new Date(),y=new Date();
+  y.setDate(n.getDate()-1);
+  if(tgSameDay(d,n))return 'Today';
+  if(tgSameDay(d,y))return 'Yesterday';
+  return d.toLocaleDateString([],{month:'long',day:'numeric',year:d.getFullYear()===n.getFullYear()?undefined:'numeric'});
+}
+
+function tgListTime(ts){
+  const d=new Date(ts),n=new Date();
+  if(tgSameDay(d,n))return tgTime(ts);
+  if(n-d<6*864e5)return d.toLocaleDateString([],{weekday:'short'});
+  return d.toLocaleDateString([],{month:'short',day:'numeric'});
+}
+
+function tgStatus(d){
+  if(d.isPublic)return 'public chat';
+  if(d.online)return 'online';
+  if(!d.lastSeen)return 'last seen recently';
+  const ls=new Date(d.lastSeen),mins=(Date.now()-ls)/60000;
+  if(mins<1)return 'last seen just now';
+  if(mins<60)return 'last seen '+Math.floor(mins)+' min ago';
+  if(tgSameDay(ls,new Date()))return 'last seen today at '+tgTime(ls);
+  return 'last seen '+ls.toLocaleDateString([],{month:'short',day:'numeric'});
+}
+
+// ----- open / close -----
+function tgToggle(force){
+  tgPanelOpen=force===undefined?!tgPanelOpen:force;
+  $('#tgPanel').classList.toggle('hide',!tgPanelOpen);
+  if(!tgPanelOpen){$('#tgMenu').classList.add('hide');return;}
+  if(tgToken&&!tgMe)tgBoot();
+  if(!tgToken){
+    const cn=typeof me==='string'?me:(me&&me.username);if(cn&&!$('#tgUser').value)$('#tgUser').value=cn;
+    setTimeout(()=>$('#tgUser').focus(),40);
+  }
+  if(tgKey){
+    tgMarkRead(tgKey);
+    tgScrollBottom(true);
+  }
+}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&tgPanelOpen)tgToggle(false);
+});
+document.addEventListener('click',e=>{
+  const m=$('#tgMenu');
+  if(m&&!m.classList.contains('hide')&&!m.contains(e.target)&&!$('#tgMenuBtn').contains(e.target))m.classList.add('hide');
+});
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible'&&tgPanelOpen&&tgKey)tgMarkRead(tgKey);
+});
+
+function tgToggleMenu(e){
+  e.stopPropagation();
+  $('#tgMenu').classList.toggle('hide');
+}
+
+// ----- accounts -----
+function tgAuthMode(m){
+  tgMode=m;
+  $('#tgAuthBtn').textContent=m==='login'?'Log in':'Create account';
+  $('#tgTabLogin').classList.toggle('on',m==='login');
+  $('#tgTabReg').classList.toggle('on',m==='register');
+  $('#tgPass').autocomplete=m==='login'?'current-password':'new-password';
+}
+
+async function tgDoAuth(){
+  const username=$('#tgUser').value.trim(),password=$('#tgPass').value;
+  if(!username||!password){toast('Enter a username and password');return;}
+  $('#tgAuthBtn').disabled=true;
+  const d=await tgApi(tgMode,{username,password});
+  $('#tgAuthBtn').disabled=false;
+  if(!d)return;
+  tgToken=localStorage.tgToken=d.token;
+  $('#tgPass').value='';
+  await tgBoot();
+}
+
+async function tgBoot(){
+  if(!tgToken)return;
+  const who=await tgApi('me');
+  if(!who)return;
+  tgMe=who;
+  $('#tgAuth').classList.add('hide');
+  $('#tgApp').classList.remove('hide');
+  $('#tgMeName').textContent=who.username;
+  await tgLoadDialogs();
+  tgStartStream();
+}
+
+function tgLogout(silent){
+  const t=tgToken;
+  tgToken=null;
+  localStorage.removeItem('tgToken');
+  tgStopStream();
+  if(!silent&&t){
+    fetch('/api/chat/logout',{method:'POST',headers:{'Content-Type':'application/json',Authorization:t},body:'{}'}).catch(()=>{});
+  }
+  tgMe=null;tgKey=null;tgNewBelow=0;
+  tgDialogs.clear();tgHist.clear();tgSearchRes=[];
+  $('#tgSearch').value='';
+  $('#tgList').replaceChildren();
+  $('#tgMenu').classList.add('hide');
+  $('#tgApp').classList.add('hide');
+  $('#tgApp').classList.remove('in-chat');
+  $('#tgChat').classList.add('hide');
+  $('#tgEmpty').classList.remove('hide');
+  $('#tgAuth').classList.remove('hide');
+  tgUpdateBadge();
+}
+
+// ----- live stream -----
+function tgStopStream(){
+  if(tgStreamCtl){tgStreamCtl.abort();tgStreamCtl=null;}
+}
+
+async function tgStartStream(){
+  tgStopStream();
+  const ctl=new AbortController();
+  tgStreamCtl=ctl;
+  while(!ctl.signal.aborted){
+    try{
+      const r=await fetch('/api/chat/stream',{headers:{Authorization:tgToken||''},signal:ctl.signal});
+      if(r.status===401){tgLogout(true);return;}
+      if(!r.ok||!r.body)throw new Error('stream');
+      tgResync();
+      const reader=r.body.getReader(),dec=new TextDecoder();
+      let buf='';
+      while(true){
+        const {value,done}=await reader.read();
+        if(done)break;
+        buf+=dec.decode(value,{stream:true});
+        let i;
+        while((i=buf.indexOf('\n\n'))>=0){
+          const block=buf.slice(0,i);
+          buf=buf.slice(i+2);
+          tgHandleBlock(block);
+        }
+      }
+    }catch(e){
+      if(ctl.signal.aborted)return;
+    }
+    if(ctl.signal.aborted)return;
+    await new Promise(r=>setTimeout(r,3000));
+  }
+}
+
+function tgHandleBlock(block){
+  let ev='message',data='';
+  for(const line of block.split('\n')){
+    if(line.startsWith('event:'))ev=line.slice(6).trim();
+    else if(line.startsWith('data:'))data+=line.slice(5).trim();
+  }
+  if(!data)return;
+  try{
+    const obj=JSON.parse(data);
+    if(ev==='message')tgIngest(obj);
+    else if(ev==='presence')tgPresence(obj);
+  }catch(e){}
+}
+
+async function tgResync(){
+  await tgLoadDialogs();
+  if(tgKey)await tgLoadHistory(tgKey,0,true);
+}
+
+function tgPresence(p){
+  const dlg=tgDialogs.get(String(p.username).toLowerCase());
+  if(!dlg)return;
+  dlg.online=!!p.online;
+  if(p.lastSeen)dlg.lastSeen=p.lastSeen;
+  tgRenderList();
+  if(tgKey===dlg.key)tgRenderHeader();
+}
+
+// ----- chat list -----
+async function tgLoadDialogs(){
+  const d=await tgApi('dialogs');
+  if(!d)return;
+  const pub=tgDialogs.get('public')||{key:'public',name:'Public Chat',isPublic:true};
+  pub.last=d.public.last;
+  pub.lastId=d.public.last?d.public.last.id:0;
+  pub.unread=d.public.unread;
+  tgDialogs.set('public',pub);
+  for(const c of d.chats){
+    const key=c.name.toLowerCase();
+    const dlg=tgDialogs.get(key)||{key,name:c.name};
+    dlg.name=c.name;dlg.online=c.online;dlg.lastSeen=c.lastSeen;
+    dlg.last=c.last;dlg.lastId=c.last.id;dlg.unread=c.unread;
+    tgDialogs.set(key,dlg);
+  }
+  const viewing=tgPanelOpen&&tgKey&&document.visibilityState==='visible'?tgDialogs.get(tgKey):null;
+  if(viewing&&viewing.unread){viewing.unread=0;tgApi('read',{peer:viewing.isPublic?'public':viewing.name});}
+  tgRenderList();
+  tgUpdateBadge();
+  if(tgKey)tgRenderHeader();
+}
+
+function tgUpdateBadge(){
+  let n=0;
+  for(const d of tgDialogs.values())n+=d.unread||0;
+  const b=$('#tgBadge');
+  b.textContent=n>99?'99+':n;
+  b.classList.toggle('hide',n<1);
+}
+
+function tgItem(dlg,opts){
+  const row=tgEl('div','tg-item'+(dlg.key===tgKey?' active':''));
+  row.setAttribute('role','button');
+  row.tabIndex=0;
+  row.appendChild(tgAvatar(dlg.name,'',dlg.isPublic,dlg.online));
+
+  const body=tgEl('div','tg-item-body');
+  const top=tgEl('div','tg-item-top');
+  top.appendChild(tgEl('div','tg-item-name',dlg.name));
+  if(dlg.last)top.appendChild(tgEl('div','tg-item-time',tgListTime(dlg.last.ts)));
+
+  const bot=tgEl('div','tg-item-bot');
+  const prev=tgEl('div','tg-item-prev');
+  if(dlg.last){
+    if(dlg.last.mine)prev.appendChild(tgEl('b','','You: '));
+    else if(dlg.isPublic)prev.appendChild(tgEl('b','',dlg.last.from+': '));
+    prev.appendChild(document.createTextNode(dlg.last.text.replace(/\s+/g,' ')));
+  }else{
+    prev.textContent=opts&&opts.hint?opts.hint:'No messages yet';
+  }
+  bot.appendChild(prev);
+  if(dlg.unread)bot.appendChild(tgEl('div','tg-unread',dlg.unread>99?'99+':dlg.unread));
+
+  body.append(top,bot);
+  row.appendChild(body);
+  const open=()=>tgOpenChat(dlg.key);
+  row.onclick=open;
+  row.onkeydown=e=>{if(e.key==='Enter')open();};
+  return row;
+}
+
+function tgRenderList(){
+  if(!tgMe)return;
+  const q=$('#tgSearch').value.trim().toLowerCase();
+  const list=$('#tgList');
+  const keep=list.scrollTop;
+  list.replaceChildren();
+
+  const tsOf=d=>d.last?new Date(d.last.ts).getTime():0;
+  let items=[...tgDialogs.values()].sort((a,b)=>
+    (b.isPublic?1:0)-(a.isPublic?1:0)||tsOf(b)-tsOf(a));
+  if(q)items=items.filter(d=>d.name.toLowerCase().includes(q));
+
+  for(const d of items)list.appendChild(tgItem(d));
+
+  if(q){
+    const extra=tgSearchRes.filter(u=>!tgDialogs.has(u.name.toLowerCase()));
+    if(extra.length){
+      list.appendChild(tgEl('div','tg-section','Global search'));
+      for(const u of extra){
+        const dlg={key:u.name.toLowerCase(),name:u.name,online:u.online,last:null,unread:0};
+        list.appendChild(tgItem(dlg,{hint:'Tap to start a chat'}));
+      }
+    }
+    if(!items.length&&!extra.length){
+      list.appendChild(tgEl('div','tg-none','No users found. Press Enter to open a chat with the exact username.'));
+    }
+  }
+  list.scrollTop=keep;
+}
+
+function tgSearchInput(){
+  const q=$('#tgSearch').value.trim();
+  tgRenderList();
+  clearTimeout(tgSearchTimer);
+  if(q.length<2){tgSearchRes=[];tgRenderList();return;}
+  const seq=++tgSearchSeq;
+  tgSearchTimer=setTimeout(async()=>{
+    const d=await tgApi('users/search?q='+encodeURIComponent(q));
+    if(!d||seq!==tgSearchSeq)return;
+    tgSearchRes=d.users;
+    tgRenderList();
+  },250);
+}
+
+async function tgSearchEnter(){
+  const q=$('#tgSearch').value.trim();
+  if(!q)return;
+  if(tgMe&&q.toLowerCase()===tgMe.username.toLowerCase()){toast("That's you!");return;}
+  const d=await tgApi('user?name='+encodeURIComponent(q));
+  if(!d)return;
+  const key=d.name.toLowerCase();
+  const dlg=tgDialogs.get(key)||{key,name:d.name,unread:0,last:null};
+  dlg.name=d.name;dlg.online=d.online;dlg.lastSeen=d.lastSeen;
+  tgDialogs.set(key,dlg);
+  tgOpenChat(key);
+}
+
+// ----- conversation -----
+async function tgOpenChat(key){
+  const dlg=tgDialogs.get(key);
+  if(!dlg)return;
+  tgKey=key;
+  tgNewBelow=0;
+  $('#tgApp').classList.add('in-chat');
+  $('#tgEmpty').classList.add('hide');
+  $('#tgChat').classList.remove('hide');
+  $('#tgSearch').value='';
+  tgSearchRes=[];
+  tgRenderHeader();
+  tgRenderList();
+  if(tgHist.has(key)){
+    tgRenderMessages('bottom');
+  }else{
+    $('#tgMsgs').replaceChildren(tgEl('div','tg-day','Loading…'));
+    await tgLoadHistory(key,0,false);
+    if(tgKey!==key)return;
+    tgRenderMessages('bottom');
+  }
+  tgMarkRead(key);
+  if(window.innerWidth>700)$('#tgInput').focus();
+}
+
+function tgBack(){
+  tgKey=null;
+  $('#tgApp').classList.remove('in-chat');
+  $('#tgChat').classList.add('hide');
+  $('#tgEmpty').classList.remove('hide');
+  tgRenderList();
+}
+
+function tgRenderHeader(){
+  const dlg=tgDialogs.get(tgKey);
+  if(!dlg)return;
+  $('#tgHeadAva').replaceChildren(tgAvatar(dlg.name,'sm',dlg.isPublic,false));
+  $('#tgHeadName').textContent=dlg.name;
+  const st=$('#tgHeadStatus');
+  st.textContent=tgStatus(dlg);
+  st.classList.toggle('on',!!dlg.online);
+}
+
+async function tgLoadHistory(key,before,merge){
+  const dlg=tgDialogs.get(key);
+  if(!dlg)return;
+  const peer=dlg.isPublic?'public':dlg.name;
+  const d=await tgApi('history?peer='+encodeURIComponent(peer)+'&limit=50'+(before?'&before='+before:''));
+  if(!d)return;
+  const h=tgHist.get(key)||{msgs:[],more:false};
+  if(before){
+    h.msgs=[...d.messages,...h.msgs];
+    h.more=d.more;
+  }else if(merge&&tgHist.has(key)){
+    const byId=new Map(h.msgs.map(m=>[m.id,m]));
+    for(const m of d.messages)byId.set(m.id,m);
+    h.msgs=[...byId.values()].sort((a,b)=>a.id-b.id);
+  }else{
+    h.msgs=d.messages;
+    h.more=d.more;
+  }
+  tgHist.set(key,h);
+  if(d.peer){
+    dlg.online=d.peer.online;
+    dlg.lastSeen=d.peer.lastSeen;
+  }
+  if(merge&&tgKey===key){tgRenderHeader();tgRenderMessages('keep');}
+}
+
+function tgNearBottom(){
+  const m=$('#tgMsgs');
+  return m.scrollHeight-m.scrollTop-m.clientHeight<90;
+}
+
+function tgScrollBottom(force){
+  const m=$('#tgMsgs');
+  if(force||tgNearBottom())m.scrollTop=m.scrollHeight;
+  if(force){tgNewBelow=0;tgUpdateFab();}
+}
+
+function tgUpdateFab(){
+  const m=$('#tgMsgs');
+  const far=m.scrollHeight-m.scrollTop-m.clientHeight>220;
+  $('#tgFab').classList.toggle('hide',!far);
+  const b=$('#tgFabBadge');
+  b.textContent=tgNewBelow;
+  b.classList.toggle('hide',tgNewBelow<1);
+}
+
+function tgRenderMessages(scroll){
+  const h=tgHist.get(tgKey);
+  const dlg=tgDialogs.get(tgKey);
+  if(!h||!dlg)return;
+  const box=$('#tgMsgs');
+  const prevH=box.scrollHeight,prevT=box.scrollTop;
+  const stick=scroll==='bottom'||(scroll==='keep'&&tgNearBottom());
+  box.replaceChildren();
+
+  if(h.more){
+    const more=tgEl('button','tg-more','Load earlier messages');
+    more.onclick=async()=>{
+      more.disabled=true;
+      more.textContent='Loading…';
+      await tgLoadHistory(tgKey,h.msgs[0].id,false);
+      tgRenderMessages('prepend');
+    };
+    box.appendChild(more);
+  }
+
+  const msgs=h.msgs;
+  if(!msgs.length){
+    box.appendChild(tgEl('div','tg-day',dlg.isPublic?'No messages yet. Say hello to everyone!':'No messages here yet. Say hi!'));
+  }
+
+  msgs.forEach((m,i)=>{
+    const prev=msgs[i-1],next=msgs[i+1];
+    if(!prev||!tgSameDay(prev.ts,m.ts))box.appendChild(tgEl('div','tg-day',tgDayLabel(m.ts)));
+
+    const mine=m.from===tgMe.username;
+    const close=(a,b)=>a&&b&&a.from===b.from&&tgSameDay(a.ts,b.ts)&&Math.abs(new Date(b.ts)-new Date(a.ts))<300000;
+    const cont=close(prev,m),last=!close(m,next);
+
+    const row=tgEl('div','tg-row '+(mine?'out':'in')+(cont?' cont':'')+(last?' last':''));
+    const showAva=dlg.isPublic&&!mine;
+    if(showAva){
+      if(last)row.appendChild(tgAvatar(m.from,'xs'));
+      else row.appendChild(tgEl('div','tg-ava-slot'));
+    }
+
+    const bubble=tgEl('div','tg-bubble');
+    if(showAva&&!cont){
+      const nm=tgEl('div','tg-name',m.from);
+      nm.style.color=tgColor(m.from);
+      nm.onclick=()=>{
+        $('#tgSearch').value=m.from;
+        tgSearchEnter();
+      };
+      bubble.appendChild(nm);
+    }
+    bubble.appendChild(tgEl('span','tg-text',m.text));
+    bubble.appendChild(tgEl('span','tg-meta',tgTime(m.ts)+(mine?' ✓':'')));
+    row.appendChild(bubble);
+    box.appendChild(row);
+  });
+
+  if(stick)box.scrollTop=box.scrollHeight;
+  else if(scroll==='prepend')box.scrollTop=prevT+(box.scrollHeight-prevH);
+  else box.scrollTop=prevT;
+  tgUpdateFab();
+}
+
+$('#tgMsgs').addEventListener('scroll',()=>{
+  if(tgNearBottom())tgNewBelow=0;
+  tgUpdateFab();
+});
+
+async function tgMarkRead(key){
+  const dlg=tgDialogs.get(key);
+  if(!dlg)return;
+  const had=dlg.unread>0;
+  if(had){dlg.unread=0;tgRenderList();tgUpdateBadge();}
+  if(had)tgApi('read',{peer:dlg.isPublic?'public':dlg.name});
+}
+
+// ----- incoming messages -----
+function tgIngest(m){
+  if(!tgMe)return;
+  const mine=m.from===tgMe.username;
+  const isPub=m.to==='public';
+  const peerName=isPub?'Public Chat':(mine?m.to:m.from);
+  const key=isPub?'public':peerName.toLowerCase();
+
+  let dlg=tgDialogs.get(key);
+  if(!dlg){
+    dlg={key,name:peerName,unread:0,online:false,last:null};
+    tgDialogs.set(key,dlg);
+  }
+
+  let isNew=true;
+  const h=tgHist.get(key);
+  if(h){
+    if(h.msgs.some(x=>x.id===m.id))isNew=false;
+    else{
+      h.msgs.push(m);
+      h.msgs.sort((a,b)=>a.id-b.id);
+    }
+  }
+
+  if(!dlg.lastId||m.id>=dlg.lastId){
+    dlg.last={id:m.id,from:m.from,text:m.text,ts:m.ts,mine};
+    dlg.lastId=m.id;
+  }
+
+  const viewing=tgPanelOpen&&tgKey===key&&document.visibilityState==='visible';
+  const wasNear=tgKey===key?tgNearBottom():true;
+
+  if(isNew&&!mine){
+    if(viewing){
+      tgApi('read',{peer:isPub?'public':dlg.name});
+    }else{
+      dlg.unread=(dlg.unread||0)+1;
+    }
+  }
+
+  tgRenderList();
+  tgUpdateBadge();
+
+  if(tgKey===key&&h){
+    tgRenderMessages(mine||wasNear?'bottom':'keep');
+    if(isNew&&!mine&&!wasNear){tgNewBelow++;tgUpdateFab();}
+  }
+}
+
+// ----- sending -----
+function tgInputChanged(){
+  const t=$('#tgInput');
+  t.style.height='auto';
+  t.style.height=Math.min(t.scrollHeight,120)+'px';
+  $('#tgSend').disabled=!t.value.trim();
+}
+
+function tgInputKey(e){
+  if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){
+    e.preventDefault();
+    tgSend();
+  }
+}
+
+async function tgSend(){
+  const inp=$('#tgInput');
+  const text=inp.value.trim();
+  const dlg=tgDialogs.get(tgKey);
+  if(!text||!dlg||tgSending)return;
+  tgSending=true;
+  inp.value='';
+  tgInputChanged();
+  const d=await tgApi('send',{to:dlg.isPublic?'public':dlg.name,text});
+  tgSending=false;
+  if(!d){
+    if(!inp.value){inp.value=text;tgInputChanged();}
+    return;
+  }
+  tgIngest(d.message);
+  tgScrollBottom(true);
+  inp.focus();
+}
+
+function tgInit(){
+  tgAuthMode('login');
+  if(tgToken)tgBoot();
+}
+
 // Admin account management
 async function loadUsers(){
   const users=await api('admin/users');
@@ -1400,6 +2204,7 @@ loadAnnouncement();
 setInterval(()=>loadAnnouncement(false),10000);
 
 init();
+tgInit();
 </script>
 </body>
 </html>
