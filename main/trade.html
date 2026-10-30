@@ -15,10 +15,20 @@ header{display:flex;align-items:center;justify-content:space-between;gap:12px;pa
 .btn{background:var(--gold);color:#1a1300;border:0;padding:11px 18px;border-radius:9px;font-weight:700;cursor:pointer;font-size:14px}
 .btn:hover{filter:brightness(1.08)}.btn.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
 .btn.buy{background:var(--g);color:#06210f}.btn.sell{background:var(--r);color:#2a0710}
-.wrap{max-width:1250px;margin:auto;padding:18px 24px 50px;display:grid;grid-template-columns:260px minmax(0,1fr) 290px;gap:16px}
+.wrap{max-width:1250px;margin:auto;padding:18px 24px 50px;display:grid;grid-template-columns:280px minmax(0,1fr) 290px;gap:16px}
 @media(max-width:1000px){.wrap{grid-template-columns:1fr}}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px;min-width:0}
-.coin{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer;border:1px solid transparent}
+
+/* Market Category Switcher */
+.mkt-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:12px}
+.mkt-tab{background:#0b0e17;color:var(--mut);border:1px solid var(--line);padding:8px 6px;border-radius:8px;font-weight:700;font-size:12px;cursor:pointer;text-align:center}
+.mkt-tab.on{background:var(--gold);color:#1a1300;border-color:var(--gold)}
+.mkt-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.badge-steady{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;background:#153728;color:var(--g)}
+.badge-extreme{display:inline-block;padding:2px 6px;border-radius:4px;font-size:10px;font-weight:700;background:#44161f;color:var(--r);animation:pulseMeme 1.5s infinite}
+@keyframes pulseMeme{0%,100%{opacity:1}50%{opacity:0.6}}
+
+.coin{display:flex;align-items:center;gap:10px;padding:10px;border-radius:10px;cursor:pointer;border:1px solid transparent;margin-bottom:4px}
 .coin:hover{background:#1b2340}.coin.on{background:#1b2340;border-color:var(--gold)}
 .coin .e{font-size:24px;width:32px;text-align:center}.coin .s{font-weight:700}.coin .n{font-size:11px;color:var(--mut)}
 .coin .p{margin-left:auto;text-align:right;font-variant-numeric:tabular-nums}.up{color:var(--g)}.dn{color:var(--r)}
@@ -43,6 +53,7 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}th{col
 .auto-note{color:var(--mut);font-size:12px;margin-top:5px}
 .auto-status{color:var(--mut);font-size:12px;margin-top:10px;overflow-wrap:anywhere}
 .btn.wide{width:100%;margin-top:10px}
+
 /* Live announcement ticker */
 .announcement-bar{display:flex;align-items:center;gap:12px;overflow:hidden;background:linear-gradient(90deg,#171d31,#22213a,#171d31);border-bottom:1px solid #4b4261;padding:10px 0;min-height:44px}
 .announcement-label{flex:0 0 auto;margin-left:20px;color:var(--gold);font-size:11px;font-weight:900;letter-spacing:1.5px}
@@ -53,6 +64,7 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}th{col
 @keyframes announcementScroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 @media(prefers-reduced-motion:reduce){.announcement-track{animation-duration:90s}}
 .hide{display:none!important}
+
 /* Telegram-style chat */
 .tg-launcher{position:fixed;left:18px;bottom:18px;z-index:25;width:58px;height:58px;border-radius:50%;border:0;background:linear-gradient(150deg,#52a8f0,#2481cc);color:#fff;cursor:pointer;box-shadow:0 6px 20px #0009;display:flex;align-items:center;justify-content:center;padding:0;transition:transform .15s}
 .tg-launcher:hover{transform:scale(1.07)}
@@ -67,7 +79,7 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}th{col
 .tg-iconbtn{background:transparent;border:0;color:#7f91a4;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0;flex:none}
 .tg-iconbtn:hover{background:#ffffff14;color:#cfd8e3}
 
-/* sign in */
+/* Sign in */
 .tg-auth{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;background:#17212b;position:relative;text-align:center}
 .tg-auth .tg-close{position:absolute;top:10px;right:10px}
 .tg-logo{width:104px;height:104px;border-radius:50%;background:linear-gradient(150deg,#52a8f0,#2481cc);display:flex;align-items:center;justify-content:center;margin-bottom:18px;color:#fff}
@@ -87,7 +99,7 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}th{col
 .tg-primary:disabled{opacity:.5;cursor:not-allowed}
 .tg-hint{margin:12px 0 0;font-size:12px;color:#5d7081;text-align:center}
 
-/* app shell */
+/* App shell */
 .tg-app{flex:1;display:flex;min-width:0;min-height:0}
 .tg-side{width:310px;flex:none;background:#17212b;border-right:1px solid #0b1118;display:flex;flex-direction:column;min-height:0}
 .tg-side-head{display:flex;align-items:center;gap:6px;padding:8px 10px;position:relative}
@@ -125,7 +137,7 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}th{col
 .tg-item.active .tg-unread{background:#fff;color:#2b5278}
 .tg-none{padding:30px 20px;text-align:center;color:#7f91a4}
 
-/* conversation */
+/* Conversation */
 .tg-main{flex:1;min-width:0;display:flex;flex-direction:column;position:relative;background:#0e1621;background-image:radial-gradient(circle at 20% 15%,#16263a 0,transparent 45%),radial-gradient(circle at 85% 85%,#122032 0,transparent 50%)}
 .tg-empty{flex:1;display:flex;align-items:center;justify-content:center;position:relative}
 .tg-empty span{background:#17212bcc;color:#9db0c3;padding:6px 16px;border-radius:16px;font-size:13px}
@@ -204,14 +216,27 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}th{col
 
 <div class="wrap">
   <div>
-    <div class="card" id="list"></div>
+    <div class="card">
+      <div class="mkt-header">
+        <b style="font-size:15px">Markets</b>
+        <span id="secDesc" style="font-size:11px;color:var(--mut)">Steady · Rare deep dips</span>
+      </div>
+      <div class="mkt-tabs">
+        <button class="mkt-tab on" id="tabCrypto" onclick="setCategory('crypto')">🪙 Crypto</button>
+        <button class="mkt-tab" id="tabMemes" onclick="setCategory('memecoin')">🚀 Memes</button>
+      </div>
+      <div id="list"></div>
+    </div>
     <div class="card" id="feed" style="margin-top:16px"></div>
   </div>
 
   <div class="card">
     <div class="top">
       <div>
-        <div style="color:var(--mut)" id="cname"></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <span style="color:var(--mut)" id="cname"></span>
+          <span id="cbadge"></span>
+        </div>
         <div class="price" id="cprice">—</div>
         <div id="cchg"></div>
       </div>
@@ -245,14 +270,14 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}th{col
     </div>
 
     <div class="auto-box">
-      <b>Auto-sell · <span id="autosym">DOGO</span></b>
+      <b>Auto-sell · <span id="autosym">BTCP</span></b>
       <div class="auto-note">
-        Automatically sells your entire holding when a target or stop price is reached.
+        Automatically sells your entire holding when a profit target or loss limit is reached.
       </div>
-      <label for="autotarget">Take-profit price (optional)</label>
-      <input id="autotarget" type="number" min="0" step="any" placeholder="e.g. 0.50">
-      <label for="autostop">Stop-loss price (optional)</label>
-      <input id="autostop" type="number" min="0" step="any" placeholder="e.g. 0.30">
+      <label for="autotarget">Take-profit in coins (optional)</label>
+      <input id="autotarget" type="number" min="0" step="any" placeholder="e.g. 60000">
+      <label for="autostop">Stop-loss in coins (optional)</label>
+      <input id="autostop" type="number" min="0" step="any" placeholder="e.g. 2500">
       <button class="btn wide" onclick="saveAutoSell()">Save auto-sell</button>
       <button class="btn ghost wide" onclick="clearAutoSell()">Cancel auto-sell</button>
       <div id="autosummary" class="auto-status">No active auto-sell rule.</div>
@@ -263,7 +288,7 @@ th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line)}th{col
     <b>Your portfolio</b>
     <table>
       <thead>
-        <tr><th>Asset</th><th>Quantity</th><th>Avg cost</th><th>Price</th><th>Value</th><th>P&amp;L</th><th></th></tr>
+        <tr><th>Asset</th><th>Type</th><th>Quantity</th><th>Avg cost</th><th>Price</th><th>Value</th><th>P&amp;L</th><th></th></tr>
       </thead>
       <tbody id="pf"></tbody>
     </table>
@@ -353,7 +378,8 @@ const $ = s => document.querySelector(s);
 const token = localStorage.token;
 if (!token) location = '/';
 
-let me = '', sel = 'DOGO', side = 'buy', type = 'line', tf = 180;
+let me = '', sel = 'BTCP', side = 'buy', type = 'line', tf = 180;
+let mCategory = 'crypto'; // 'crypto' | 'memecoin'
 let M = null, mouse = null, busy = false;
 
 const fmt = n => Math.floor(n).toLocaleString();
@@ -400,6 +426,23 @@ async function api(p, b) {
   }
 }
 
+function setCategory(cat) {
+  mCategory = cat;
+  $('#tabCrypto').classList.toggle('on', cat === 'crypto');
+  $('#tabMemes').classList.toggle('on', cat === 'memecoin');
+  $('#secDesc').textContent = cat === 'crypto'
+    ? 'Steady · Rare deep dips'
+    : '🔥 +60k on 5k or total loss';
+
+  if (M) {
+    const available = M.coins.filter(c => c.category === cat);
+    if (!available.some(c => c.sym === sel) && available.length) {
+      sel = available[0].sym;
+    }
+  }
+  load();
+}
+
 async function load() {
   const d = await api('market?coin=' + encodeURIComponent(sel));
   if (!d) return;
@@ -407,17 +450,30 @@ async function load() {
   M = d;
   $('#bal').textContent = fmt(d.balance);
 
-  $('#list').innerHTML =
-    '<b style="display:block;margin-bottom:8px">Markets</b>' +
-    d.coins.map(c => `
-      <div class="coin ${c.sym === sel ? 'on' : ''}" onclick="pick('${c.sym}')">
-        <div class="e">${c.emoji}</div>
-        <div><div class="s">${c.sym}</div><div class="n">${c.name}</div></div>
-        <div class="p">
-          <div>${fp(c.price)}</div>
-          <div class="${c.change >= 0 ? 'up' : 'dn'}">${pc(c.change)}</div>
-        </div>
-      </div>`).join('');
+  const activeCoin = d.coins.find(c => c.sym === sel);
+  if (activeCoin && activeCoin.category !== mCategory) {
+    mCategory = activeCoin.category;
+  }
+  $('#tabCrypto').classList.toggle('on', mCategory === 'crypto');
+  $('#tabMemes').classList.toggle('on', mCategory === 'memecoin');
+  $('#secDesc').textContent = mCategory === 'crypto'
+    ? 'Steady · Rare deep dips'
+    : '🔥 +60k on 5k or total loss';
+
+  const visibleCoins = d.coins.filter(c => c.category === mCategory);
+
+  $('#list').innerHTML = visibleCoins.map(c => `
+    <div class="coin ${c.sym === sel ? 'on' : ''}" onclick="pick('${c.sym}')">
+      <div class="e">${c.emoji}</div>
+      <div>
+        <div class="s">${c.sym}</div>
+        <div class="n">${c.name}</div>
+      </div>
+      <div class="p">
+        <div>${fp(c.price)}</div>
+        <div class="${c.change >= 0 ? 'up' : 'dn'}">${pc(c.change)}</div>
+      </div>
+    </div>`).join('');
 
   $('#feed').innerHTML =
     '<b style="display:block;margin-bottom:8px">Live trades</b>' +
@@ -437,11 +493,14 @@ async function load() {
     }).join('') || '<div style="color:var(--mut)">No trades yet.</div>') +
     '</div>';
 
-  const cur = d.coins.find(c => c.sym === sel);
+  const cur = d.coins.find(c => c.sym === sel) || d.coins[0];
   const h = d.history || [];
   const start = h[Math.max(0, h.length - tf)] || cur.price;
 
   $('#cname').textContent = cur.emoji + ' ' + cur.name + ' (' + cur.sym + ')';
+  $('#cbadge').innerHTML = cur.category === 'crypto'
+    ? '<span class="badge-steady">STEADY CRYPTO</span>'
+    : '<span class="badge-extreme">EXTREME MEMECOIN</span>';
   $('#cprice').textContent = fp(cur.price);
 
   const ch = start ? cur.price / start - 1 : 0;
@@ -591,7 +650,6 @@ function draw() {
     }
   }
 
-  // Trade markers and usernames. Labels are positioned to reduce overlap.
   const placed = [];
   const base = M.history.length - n;
   ctx.font = 'bold 11px system-ui';
@@ -655,7 +713,6 @@ function draw() {
     ctx.stroke();
   });
 
-  // Last price tag
   const last = pts[pts.length - 1].c;
   const lastY = Y(last);
   ctx.setLineDash([2, 3]);
@@ -834,7 +891,6 @@ function renderAutoSell() {
   const targetInput = $('#autotarget');
   const stopInput = $('#autostop');
 
-  // Don't overwrite a field while the user is typing in it.
   if (document.activeElement !== targetInput)
     targetInput.value = order?.target ?? '';
 
@@ -842,7 +898,7 @@ function renderAutoSell() {
     stopInput.value = order?.stop ?? '';
 
   $('#autosummary').textContent = order
-    ? `ACTIVE · Take-profit: ${order.target == null ? 'off' : fp(order.target)} · Stop-loss: ${order.stop == null ? 'off' : fp(order.stop)}`
+    ? `ACTIVE · Take-profit: ${order.target == null ? 'off' : '+' + fmt(order.target)} · Stop-loss: ${order.stop == null ? 'off' : '-' + fmt(order.stop)} coins`
     : 'No active auto-sell rule for this coin.';
 }
 
@@ -859,17 +915,12 @@ async function saveAutoSell() {
   };
 
   if (body.target === null && body.stop === null)
-    return toast('Enter a take-profit or stop-loss price.');
+    return toast('Enter a take-profit or stop-loss limit.');
 
   if (
     (body.target !== null && (!Number.isFinite(body.target) || body.target <= 0)) ||
     (body.stop !== null && (!Number.isFinite(body.stop) || body.stop <= 0))
-  ) return toast('Prices must be positive numbers.');
-
-  if (
-    body.target !== null && body.stop !== null &&
-    body.target <= body.stop
-  ) return toast('Take-profit must be higher than stop-loss.');
+  ) return toast('Limits must be positive numbers in coins.');
 
   busy = true;
   try {
@@ -914,6 +965,7 @@ function portfolio() {
     return `
       <tr>
         <td onclick="pick('${h.sym}')" style="cursor:pointer">${c.emoji} <b>${h.sym}</b></td>
+        <td><span class="${c.category === 'crypto' ? 'badge-steady' : 'badge-extreme'}">${c.category === 'crypto' ? 'Crypto' : 'Meme'}</span></td>
         <td>${h.qty.toPrecision(5)}</td>
         <td>${fp(h.cost / h.qty)}</td>
         <td>${fp(c.price)}</td>
@@ -922,7 +974,7 @@ function portfolio() {
         <td><button class="btn sell" style="padding:6px 12px" onclick="sellAll('${h.sym}')">Sell all</button></td>
       </tr>`;
   }).join('') ||
-    '<tr><td colspan="7" style="color:var(--mut)">No holdings yet — buy a coin to get started.</td></tr>';
+    '<tr><td colspan="8" style="color:var(--mut)">No holdings yet — buy a coin to get started.</td></tr>';
 
   $('#pfsum').innerHTML = M.holdings.length
     ? `Portfolio value <b style="color:var(--txt)">${fmt(tv)}</b> · Total P&amp;L <b class="${tv >= tc ? 'up' : 'dn'}">${tv >= tc ? '+' : ''}${fmt(tv - tc)}</b> · Net worth <b style="color:var(--gold)">${fmt(M.balance + tv)}</b>`
@@ -941,7 +993,6 @@ setSide('buy');
 load();
 setInterval(load, 1000);
 
-// Live announcement ticker (message is set by admins on the main site)
 let announcementMessage='';
 function paintAnnouncement(message){
   const text=String(message||'').trim()||'Welcome to Royal Paper Casino — virtual points only.';
@@ -961,7 +1012,6 @@ async function loadAnnouncement(){
     const data=await response.json();
     paintAnnouncement(data.message);
   }catch(error){
-    // Keep the last announcement visible if the server is temporarily unavailable.
   }
 }
 loadAnnouncement();
@@ -1048,7 +1098,6 @@ function tgStatus(d){
   return 'last seen '+ls.toLocaleDateString([],{month:'short',day:'numeric'});
 }
 
-// ----- open / close -----
 function tgToggle(force){
   tgPanelOpen=force===undefined?!tgPanelOpen:force;
   $('#tgPanel').classList.toggle('hide',!tgPanelOpen);
@@ -1080,7 +1129,6 @@ function tgToggleMenu(e){
   $('#tgMenu').classList.toggle('hide');
 }
 
-// ----- accounts -----
 function tgAuthMode(m){
   tgMode=m;
   $('#tgAuthBtn').textContent=m==='login'?'Log in':'Create account';
@@ -1134,7 +1182,6 @@ function tgLogout(silent){
   tgUpdateBadge();
 }
 
-// ----- live stream -----
 function tgStopStream(){
   if(tgStreamCtl){tgStreamCtl.abort();tgStreamCtl=null;}
 }
@@ -1198,7 +1245,6 @@ function tgPresence(p){
   if(tgKey===dlg.key)tgRenderHeader();
 }
 
-// ----- chat list -----
 async function tgLoadDialogs(){
   const d=await tgApi('dialogs');
   if(!d)return;
@@ -1317,7 +1363,7 @@ async function tgSearchEnter(){
   tgOpenChat(key);
 }
 
-// ----- conversation -----
+// ----- Conversation -----
 async function tgOpenChat(key){
   const dlg=tgDialogs.get(key);
   if(!dlg)return;
@@ -1481,7 +1527,6 @@ async function tgMarkRead(key){
   if(had)tgApi('read',{peer:dlg.isPublic?'public':dlg.name});
 }
 
-// ----- incoming messages -----
 function tgIngest(m){
   if(!tgMe)return;
   const mine=m.from===tgMe.username;
@@ -1530,7 +1575,6 @@ function tgIngest(m){
   }
 }
 
-// ----- sending -----
 function tgInputChanged(){
   const t=$('#tgInput');
   t.style.height='auto';
@@ -1568,7 +1612,6 @@ function tgInit(){
   tgAuthMode('login');
   if(tgToken)tgBoot();
 }
-
 
 tgInit();
 </script>

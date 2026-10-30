@@ -22,7 +22,7 @@ app.use(express.json({ limit: '20kb' }));
 
 const START_BALANCE = 1000;
 // Any name of 1-16 characters (no leading/trailing spaces, no control characters).
-const NAME_RE = /^[^\u0000-\u001f\u007f]{1,16}$/;
+const NAME_RE = /^[^ -]{1,16}$/;
 const validName = n => typeof n === 'string' && n === n.trim() && NAME_RE.test(n);
 const NAME_ERR = 'Username must be 1-16 characters';
 const validPassword = p => typeof p === 'string' && p.length >= 1 && p.length <= 200;
@@ -54,27 +54,38 @@ const cm = (p, n) => 0.97 / Math.pow(1 - p, n);
 const RED = new Set([1,3,5,7,9,12,14,16,18,19,21,23,25,27,30,32,34,36]);
 
 // ---------- Virtual crypto market configuration ----------
+// 2 Distinct classes:
+// 1. 'crypto': Steady, small organic moves, rare severe flash drops / crashes.
+// 2. 'memecoin': Wild roller-coaster. Huge +1200% rocket pumps (+60k on 5k) followed by instantaneous rugpulls/dumps.
 
 const COINS = {
   BTCP: {
     name: 'Paper Bitcoin', emoji: '₿', category: 'crypto',
-    anchor: 50000, vol: 0.025
+    anchor: 65000, vol: 0.002
+  },
+  ETHP: {
+    name: 'Paper Ethereum', emoji: 'Ξ', category: 'crypto',
+    anchor: 3400, vol: 0.003
+  },
+  SOLP: {
+    name: 'Paper Solana', emoji: '◎', category: 'crypto',
+    anchor: 160, vol: 0.0045
   },
   MOONZ: {
     name: 'MoonZ', emoji: '🚀', category: 'memecoin',
-    anchor: 1.8, vol: 0.075
+    anchor: 1.5, vol: 0.22
   },
   DOGO: {
     name: 'Dogo Coin', emoji: '🐶', category: 'memecoin',
-    anchor: 0.42, vol: 0.060
+    anchor: 0.40, vol: 0.25
   },
   WOJK: {
     name: 'Wojak Finance', emoji: '😭', category: 'memecoin',
-    anchor: 0.12, vol: 0.095
+    anchor: 0.10, vol: 0.32
   },
   PEPO: {
     name: 'Pepo the Frog', emoji: '🐸', category: 'memecoin',
-    anchor: 0.0035, vol: 0.120
+    anchor: 0.004, vol: 0.40
   }
 };
 
@@ -96,15 +107,11 @@ let tradeId = 0;
 const TRADES = [];
 
 // ---------- Exodus-style game wallet ----------
-// Real asset names, simulated prices (virtual coins only, no real value).
-// Wallets are separate from casino accounts: anyone who has the wallet's
-// password OR its 12-word seed phrase can open it and move the funds.
-
 const WCOINS = {
   BTC:  { name: 'Bitcoin',  glyph: '₿', color: '#f7931a', anchor: 103794.44, vol: 0.0009 },
   ETH:  { name: 'Ethereum', glyph: 'Ξ', color: '#8c9eff', anchor: 2730.28,   vol: 0.0011 },
   SOL:  { name: 'Solana',   glyph: '◎', color: '#14f195', anchor: 172.34,    vol: 0.0014 },
-  BNB:  { name: 'BNB',      glyph: 'B',      color: '#f3ba2f', anchor: 690,       vol: 0.0010 },
+  BNB:  { name: 'BNB',      glyph: 'B', color: '#f3ba2f', anchor: 690,       vol: 0.0010 },
   XRP:  { name: 'XRP',      glyph: '✕', color: '#9aa4b5', anchor: 2.45,      vol: 0.0016 },
   DOGE: { name: 'Dogecoin', glyph: 'Ð', color: '#c2a633', anchor: 0.21,      vol: 0.0020 },
   ADA:  { name: 'Cardano',  glyph: '₳', color: '#3b82f6', anchor: 0.75,      vol: 0.0016 },
@@ -147,7 +154,6 @@ async function persistWalletPrices() {
   }
 }
 
-// Premade word list the seed phrases are drawn from (12 distinct words each).
 const WSEED_WORDS = [...new Set((`
 amber anchor angel apple arrow aspen atlas aurora autumn badge bamboo banjo barrel basil beacon beaver berry bishop
 blanket blossom bridge bronze brook bubble buffalo butter cabin cactus camel candle canyon captain carbon cargo carpet
@@ -180,9 +186,6 @@ const seedHash = words =>
   crypto.createHash('sha256').update('wallet-seed:' + words.join(' ')).digest('hex');
 
 // ---------- Luxury shop catalog ----------
-// Prices are in virtual coins. Real brand and place names are used for fun; items have no real-world value.
-// tier uses the same names as the case rarities: common, uncommon, rare, epic, legendary.
-
 const SHOP_SELL_RATE = 0.8;
 
 const SHOP_CATEGORIES = [
@@ -195,7 +198,6 @@ const SHOP_CATEGORIES = [
 ];
 
 const SHOP_ITEMS = [
-  // ----- Watches -----
   { id: 'w01', category: 'watches', emoji: '⌚', tier: 'common',    price: 2500,      name: "Casio F-91W",                          desc: "The iconic digital classic. Alarm, stopwatch, and nearly indestructible." },
   { id: 'w02', category: 'watches', emoji: '⏱️', tier: 'common',    price: 12000,     name: "Seiko Prospex Diver",                  desc: "Serious dive watch with a rotating bezel and a reputation for toughness." },
   { id: 'w03', category: 'watches', emoji: '🌙', tier: 'uncommon',  price: 45000,     name: "Omega Speedmaster Professional",       desc: "The Moonwatch. Worn on NASA missions, loved by collectors." },
@@ -204,8 +206,6 @@ const SHOP_ITEMS = [
   { id: 'w06', category: 'watches', emoji: '🌊', tier: 'epic',      price: 2400000,   name: "Patek Philippe Nautilus 5711",         desc: "Famously hard to get. Collectors queue for years." },
   { id: 'w07', category: 'watches', emoji: '💎', tier: 'legendary', price: 9500000,   name: "Richard Mille RM 056 Sapphire",        desc: "Case carved from a block of sapphire crystal. Wearable art that costs a fortune." },
   { id: 'w08', category: 'watches', emoji: '👑', tier: 'legendary', price: 40000000,  name: "Patek Philippe Henry Graves Supercomplication", desc: "The legendary 1932 pocket watch with 24 complications. Auction record holder in its day." },
-
-  // ----- Cars -----
   { id: 'c01', category: 'cars', emoji: '🚗', tier: 'common',    price: 18000,      name: "Honda Civic",                      desc: "Reliable, efficient and surprisingly fun to drive." },
   { id: 'c02', category: 'cars', emoji: '🐎', tier: 'common',    price: 45000,      name: "Ford Mustang GT",                  desc: "5.0L V8 muscle with an unmistakable rumble." },
   { id: 'c03', category: 'cars', emoji: '🚘', tier: 'uncommon',  price: 120000,     name: "Porsche 911 Carrera",              desc: "The everyday sports car. Rear engine, timeless shape." },
@@ -218,8 +218,6 @@ const SHOP_ITEMS = [
   { id: 'c10', category: 'cars', emoji: '🚀', tier: 'legendary', price: 12000000,   name: "Bugatti Chiron",                   desc: "8.0L quad-turbo W16 with 1,500 horsepower and a top speed over 260 mph." },
   { id: 'c11', category: 'cars', emoji: '🏆', tier: 'legendary', price: 30000000,   name: "1962 Ferrari 250 GTO",             desc: "Perhaps the most valuable classic car ever. Only 36 were built." },
   { id: 'c12', category: 'cars', emoji: '🛡️', tier: 'legendary', price: 60000000,   name: "Rolls-Royce Boat Tail",            desc: "A coachbuilt, one-of-three masterpiece with a hidden picnic set in the rear." },
-
-  // ----- Real Estate -----
   { id: 'r01', category: 'realestate', emoji: '🏢', tier: 'common',    price: 40000,        name: "Studio Apartment in Brooklyn, New York",    desc: "One room, exposed brick, and a subway stop on the corner." },
   { id: 'r02', category: 'realestate', emoji: '🏘️', tier: 'uncommon',  price: 180000,       name: "Townhouse in Austin, Texas",                desc: "Two floors, a garage and live music every night downtown." },
   { id: 'r03', category: 'realestate', emoji: '🛖', tier: 'uncommon',  price: 350000,       name: "Lakeside Cabin at Lake Tahoe",              desc: "Pine walls, wood stove and a private dock on the water." },
@@ -234,8 +232,6 @@ const SHOP_ITEMS = [
   { id: 'r12', category: 'realestate', emoji: '🏝️', tier: 'legendary', price: 150000000,    name: "Private Island in the Maldives",            desc: "White sand, a coral lagoon and nobody else for miles." },
   { id: 'r13', category: 'realestate', emoji: '🏰', tier: 'legendary', price: 300000000,    name: "Highland Castle in Scotland",               desc: "Towers, a loch view, and a heating bill you do not want to see." },
   { id: 'r14', category: 'realestate', emoji: '🛰️', tier: 'legendary', price: 1000000000,   name: "Luxury Suite on the International Space Station", desc: "The ultimate view: sixteen sunrises every day." },
-
-  // ----- Yachts & Jets -----
   { id: 'y01', category: 'yachts', emoji: '🛶', tier: 'common',    price: 15000,       name: "Sea-Doo GTX Jet Ski",             desc: "Fast, wet and a little bit reckless." },
   { id: 'y02', category: 'yachts', emoji: '⛵', tier: 'uncommon',  price: 80000,       name: "Beneteau Oceanis Sailboat",        desc: "Wind-powered and surprisingly cozy below deck." },
   { id: 'y03', category: 'yachts', emoji: '🚤', tier: 'rare',      price: 400000,      name: "Riva Aquariva Speedboat",          desc: "Mahogany-style elegance from the Italian lake boat legend." },
@@ -245,26 +241,22 @@ const SHOP_ITEMS = [
   { id: 'y07', category: 'yachts', emoji: '✈️', tier: 'legendary', price: 35000000,    name: "Gulfstream G650 Private Jet",      desc: "Crosses oceans nonstop at close to the speed of sound." },
   { id: 'y08', category: 'yachts', emoji: '🚢', tier: 'legendary', price: 120000000,   name: "Lürssen 120m Superyacht",          desc: "German-built giant with a helipad, a pool and a crew of dozens." },
   { id: 'y09', category: 'yachts', emoji: '🛫', tier: 'legendary', price: 400000000,   name: "Airbus A380 Private Airliner",     desc: "The largest passenger aircraft in the world, refitted as a flying palace." },
-
-  // ----- Jewelry -----
   { id: 'j01', category: 'jewelry', emoji: '💍', tier: 'common',    price: 800,        name: "Tiffany & Co. Sterling Silver Ring",     desc: "Simple, clean and in the famous blue box." },
   { id: 'j02', category: 'jewelry', emoji: '📿', tier: 'uncommon',  price: 20000,      name: "Mikimoto Pearl Necklace",                desc: "Cultured pearls from the family that invented them." },
   { id: 'j03', category: 'jewelry', emoji: '⛓️', tier: 'rare',      price: 75000,      name: "Cartier Love Bracelet in 18K Gold",      desc: "Locks on with its own screwdriver. A Cartier icon since 1969." },
   { id: 'j04', category: 'jewelry', emoji: '💚', tier: 'epic',      price: 400000,     name: "Van Cleef & Arpels Emerald Earrings",    desc: "Deep green emeralds in the style of the Place Vendôme masters." },
   { id: 'j05', category: 'jewelry', emoji: '🌸', tier: 'epic',      price: 15000000,   name: "Graff Pink Diamond Ring",                desc: "A rare fancy-vivid pink stone from the diamond house of London." },
-  { id: 'j06', category: 'jewelry', emoji: '👸', tier: 'legendary', price: 5000000,    name: "Harry Winston Diamond Necklace",         desc: "The \"King of Diamonds\" jeweler. Hundreds of carats of fire." },
+  { id: 'j06', category: 'jewelry', emoji: '👸', tier: 'legendary', price: 5000000,    name: "Harry Winston Diamond Necklace",         desc: "The King of Diamonds jeweler. Hundreds of carats of fire." },
   { id: 'j07', category: 'jewelry', emoji: '🔷', tier: 'legendary', price: 50000000,   name: "The Hope Diamond",                       desc: "45.52 carats of deep blue with a legend as famous as the stone." },
-
-  // ----- Art & Collectibles -----
   { id: 'a01', category: 'art', emoji: '🎬', tier: 'common',    price: 3000,       name: "Original Star Wars (1977) Movie Poster",   desc: "An original one-sheet from opening year, folded as it came from the cinema." },
-  { id: 'a02', category: 'art', emoji: '🗿', tier: 'uncommon',  price: 90000,      name: "Rodin's \"The Thinker\" Bronze Cast",       desc: "A cast of the most famous sculpture of a man deep in thought." },
+  { id: 'a02', category: 'art', emoji: '🗿', tier: 'uncommon',  price: 90000,      name: "Rodin's The Thinker Bronze Cast",       desc: "A cast of the most famous sculpture of a man deep in thought." },
   { id: 'a03', category: 'art', emoji: '⚡', tier: 'rare',      price: 250000,     name: "Pokémon 1st Edition Charizard Card",       desc: "A graded base-set holo that grown adults still dream about." },
   { id: 'a04', category: 'art', emoji: '📚', tier: 'rare',      price: 400000,     name: "Action Comics #1 (1938)",                  desc: "The first appearance of Superman. The holy grail of comics." },
   { id: 'a05', category: 'art', emoji: '🍷', tier: 'epic',      price: 1200000,    name: "Romanée-Conti Wine Cellar",                desc: "Bottles from the most prestigious vineyard in Burgundy." },
   { id: 'a06', category: 'art', emoji: '⚾', tier: 'epic',      price: 5000000,    name: "1952 Topps Mickey Mantle Baseball Card",   desc: "The most famous baseball card ever printed." },
-  { id: 'a07', category: 'art', emoji: '🎨', tier: 'legendary', price: 25000000,   name: "Claude Monet \"Water Lilies\"",            desc: "Impressionist calm in oil, from the master of the garden at Giverny." },
-  { id: 'a08', category: 'art', emoji: '🦖', tier: 'legendary', price: 90000000,   name: "T. rex Skeleton \"Stan\"",                 desc: "One of the most complete T. rex fossils ever found. Sold at auction in 2020." },
-  { id: 'a09', category: 'art', emoji: '🖌️', tier: 'legendary', price: 450000000,  name: "Leonardo da Vinci \"Salvator Mundi\"",     desc: "The painting that holds the record for the highest price ever paid for artwork." }
+  { id: 'a07', category: 'art', emoji: '🎨', tier: 'legendary', price: 25000000,   name: "Claude Monet Water Lilies",            desc: "Impressionist calm in oil, from the master of the garden at Giverny." },
+  { id: 'a08', category: 'art', emoji: '🦖', tier: 'legendary', price: 90000000,   name: "T. rex Skeleton Stan",                 desc: "One of the most complete T. rex fossils ever found. Sold at auction in 2020." },
+  { id: 'a09', category: 'art', emoji: '🖌️', tier: 'legendary', price: 450000000,  name: "Leonardo da Vinci Salvator Mundi",     desc: "The painting that holds the record for the highest price ever paid for artwork." }
 ];
 
 const SHOP_BY_ID = new Map(SHOP_ITEMS.map(i => [i.id, i]));
@@ -338,19 +330,17 @@ async function initDatabase() {
     )
   `);
 
-  // Auto-sell now works on profit/loss in coins instead of coin price.
   await pool.query(`
     ALTER TABLE auto_orders ADD COLUMN IF NOT EXISTS profit_target DOUBLE PRECISION
   `);
   await pool.query(`
     ALTER TABLE auto_orders ADD COLUMN IF NOT EXISTS loss_limit DOUBLE PRECISION
   `);
-  // Old price-based orders can't be converted safely, so remove them.
   await pool.query(`
     DELETE FROM auto_orders WHERE profit_target IS NULL AND loss_limit IS NULL
   `);
 
-  // ----- Chat (separate accounts from the casino) -----
+  // ----- Chat -----
   await pool.query(`
     CREATE TABLE IF NOT EXISTS chat_users (
       id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -395,7 +385,6 @@ async function initDatabase() {
   await pool.query(`
     CREATE INDEX IF NOT EXISTS chat_sessions_user_idx ON chat_sessions(user_id)
   `);
-  // peer_id 0 = the public chat
   await pool.query(`
     CREATE TABLE IF NOT EXISTS chat_reads (
       user_id BIGINT NOT NULL REFERENCES chat_users(id) ON DELETE CASCADE,
@@ -405,7 +394,7 @@ async function initDatabase() {
     )
   `);
 
-  // ----- Exodus-style wallets (separate from casino accounts) -----
+  // ----- Exodus-style wallets -----
   await pool.query(`
     CREATE TABLE IF NOT EXISTS wallets (
       id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -455,6 +444,23 @@ async function initDatabase() {
     )
   `);
 
+  // ----- Broker -----
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS broker_reports (
+      buyer_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      target_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      section TEXT NOT NULL,
+      price_paid BIGINT NOT NULL CHECK (price_paid >= 0),
+      data JSONB NOT NULL,
+      buys INTEGER NOT NULL DEFAULT 1,
+      purchased_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (buyer_id, target_id, section)
+    )
+  `);
+  await pool.query(`
+    CREATE INDEX IF NOT EXISTS broker_reports_target_idx ON broker_reports(target_id)
+  `);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS site_settings (
       key TEXT PRIMARY KEY,
@@ -486,7 +492,7 @@ async function initDatabase() {
     await pool.query(`
       INSERT INTO market_coins(symbol, name, category, price)
       VALUES($1, $2, $3, $4)
-      ON CONFLICT(symbol) DO NOTHING
+      ON CONFLICT(symbol) DO UPDATE SET category=EXCLUDED.category, name=EXCLUDED.name
     `, [sym, c.name, c.category, c.anchor]);
   }
 
@@ -761,7 +767,6 @@ app.post('/api/logout', auth, route(async (req, res) => {
 
 // ---------- Announcement ticker ----------
 
-// Public: everyone (even logged-out visitors) can read the current message.
 app.get('/api/announcement', route(async (req, res) => {
   const r = await pool.query(
     "SELECT value FROM site_settings WHERE key='announcement'"
@@ -770,9 +775,6 @@ app.get('/api/announcement', route(async (req, res) => {
   res.json({ message: r.rows.length ? r.rows[0].value : DEFAULT_ANNOUNCEMENT });
 }));
 
-// ---------- Admin ----------
-
-// Admin only: change the announcement message.
 app.post('/api/admin/announcement', auth, admin, route(async (req, res) => {
   const raw = req.body && req.body.message;
 
@@ -807,7 +809,6 @@ app.get('/api/admin/users', auth, admin, route(async (req, res) => {
   })));
 }));
 
-// Rename a user's username.
 app.post('/api/admin/rename', auth, admin, route(async (req, res) => {
   const { id, username } = req.body || {};
 
@@ -852,7 +853,6 @@ app.post('/api/admin/rename', auth, admin, route(async (req, res) => {
   res.json({ success: true, username });
 }));
 
-// Permanently delete a non-admin account and its related records.
 app.post('/api/admin/delete-user', auth, admin, route(async (req, res) => {
   const { id } = req.body || {};
 
@@ -1552,7 +1552,7 @@ app.post('/api/roulette/spin', auth, route(async (req, res) => {
   res.json({ number: n, payout, total, balance: await getBal(req.user.id) });
 }));
 
-// ---------- Virtual crypto market ----------
+// ---------- Virtual crypto market engine ----------
 
 function logTrade(user, sym, side, coins, qty, price) {
   TRADES.push({
@@ -1568,8 +1568,6 @@ async function saveTrade(userId, sym, side, qty, price) {
   `, [userId, sym, side, qty, price]);
 }
 
-// Profit/loss as shown in the portfolio table: current value minus what you
-// paid (the buy fee is already part of what you paid).
 const realizablePnl = (qty, cost, price) => qty * price - cost;
 
 let autoSellRunning = false;
@@ -1578,7 +1576,6 @@ async function runAutoSell(order, coin) {
   const sym = order.symbol;
 
   const sold = await transaction(async client => {
-    // Re-read everything under lock so a manual trade can't race us.
     const orderRes = await client.query(`
       SELECT profit_target, loss_limit FROM auto_orders
       WHERE user_id=$1 AND symbol=$2 FOR UPDATE
@@ -1648,7 +1645,6 @@ async function runAutoSell(order, coin) {
   }
 }
 
-// Runs on the server every second, so it works whether or not anyone is online.
 async function processAutoSells() {
   if (autoSellRunning) return;
   autoSellRunning = true;
@@ -1668,7 +1664,6 @@ async function processAutoSells() {
 
       try {
         if (order.quantity == null || Number(order.quantity) <= 0) {
-          // Holding is gone, so clean up the stale order.
           await runAutoSell(order, coin);
           continue;
         }
@@ -1697,24 +1692,53 @@ function tick(processOrders = true) {
   walletTick();
 
   for (const c of Object.values(COINS)) {
-    if (rand() < 0.035) {
-      c.mu = (rand() < 0.5 ? -1 : 1) * c.vol * (0.5 + rand() * 2);
+    if (c.category === 'crypto') {
+      // 1. CRYPTO: Steady, small gradual fluctuations, rare major flash crash / dip.
+      if (rand() < 0.02) {
+        c.mu = (rand() < 0.5 ? -1 : 1) * c.vol * (0.4 + rand() * 0.8);
+      }
+      c.mu *= 0.96;
+
+      let r = c.mu + gauss() * c.vol - 0.0007 * Math.log(c.price / c.anchor);
+
+      // Rare flash crash / big dump (approx 0.8% chance per tick)
+      if (rand() < 0.008) {
+        // Flash dip between -15% and -40%
+        r -= (0.15 + rand() * 0.25);
+      }
+
+      const nextPrice = c.price * Math.exp(Math.max(-0.6, Math.min(0.2, r)));
+      c.price = Number.isFinite(nextPrice)
+        ? Math.max(c.anchor * 0.2, nextPrice)
+        : c.anchor;
+
+    } else {
+      // 2. MEMECOINS: Extreme volatility, rocket moonshots (+60k on 5k) and total crashes / rugpulls.
+      if (rand() < 0.12) {
+        c.mu = (rand() < 0.45 ? -1 : 1) * c.vol * (1 + rand() * 3);
+      }
+      c.mu *= 0.88;
+
+      let r = c.mu + gauss() * c.vol;
+
+      // Random huge parabolic moonshot pump (approx 4.5% chance)
+      // Multiplies coin price up to 5x - 15x in a few ticks!
+      if (rand() < 0.045) {
+        r += (1.2 + rand() * 2.5); // massive sudden positive log-return (+230% to +1200% in a single step)
+      }
+
+      // Random catastrophic rugpull / dump (approx 4.5% chance)
+      // Can obliterate 80% to 98% of value instantly!
+      if (rand() < 0.045) {
+        r -= (1.6 + rand() * 2.8); // drops near zero
+      }
+
+      const nextPrice = c.price * Math.exp(Math.max(-6, Math.min(6, r)));
+      // Floor at near zero (0.000001) or ceiling at 1000x anchor
+      c.price = Number.isFinite(nextPrice)
+        ? Math.max(c.anchor * 0.005, Math.min(c.anchor * 500, nextPrice))
+        : c.anchor * 0.005;
     }
-
-    c.mu *= 0.985;
-
-    let r = c.mu + gauss() * c.vol
-      - 0.0008 * Math.log(c.price / c.anchor);
-
-    if (rand() < 0.012) {
-      r += (rand() < 0.5 ? -1 : 1) * (0.12 + rand() * 0.65);
-    }
-
-    const nextPrice = c.price * Math.exp(Math.max(-5, Math.min(5, r)));
-
-    c.price = Number.isFinite(nextPrice)
-      ? Math.max(c.anchor * 0.001, nextPrice)
-      : c.anchor * 0.001;
 
     c.hist.push(c.price);
     if (c.hist.length > HIST) c.hist.shift();
@@ -1737,7 +1761,7 @@ async function persistMarket() {
 }
 
 app.get('/api/market', auth, route(async (req, res) => {
-  const sel = COINS[req.query.coin] ? req.query.coin : 'DOGO';
+  const sel = COINS[req.query.coin] ? req.query.coin : 'BTCP';
 
   const holdingsResult = await pool.query(`
     SELECT symbol AS sym, quantity AS qty, cost_basis AS cost
@@ -1918,9 +1942,6 @@ app.post('/api/trade', auth, route(async (req, res) => {
 }));
 
 // ---------- Auto-sell settings ----------
-// "target" = sell once your profit reaches this many coins (e.g. 300000).
-// "stop"   = sell once your loss reaches this many coins (optional).
-// (profit / loss are accepted as aliases.) Profit = value now minus cost, same as the portfolio P&L.
 
 app.post('/api/auto-sell', auth, route(async (req, res) => {
   const { sym } = req.body || {};
@@ -2043,7 +2064,6 @@ app.post('/api/shop/sell', auth, route(async (req, res) => {
   let refund = 0;
 
   await transaction(async client => {
-    // Lock the user row first so balance updates stay ordered with buys.
     await client.query('SELECT id FROM users WHERE id=$1 FOR UPDATE', [uid]);
 
     const removed = await client.query(`
@@ -2069,12 +2089,11 @@ app.post('/api/shop/sell', auth, route(async (req, res) => {
   });
 }));
 
-// ---------- Chat (Telegram-style messenger) ----------
+// ---------- Chat ----------
 
 const CHAT_MAX_LEN = 1000;
 const CHAT_RESERVED = new Set(['public']);
 
-// userId (string) -> Set of open SSE responses
 const chatClients = new Map();
 const chatOfflineTimers = new Map();
 const chatRate = new Map();
@@ -2087,7 +2106,7 @@ const chatOnline = id => {
 function chatPush(res, event, data) {
   try {
     res.write(`event: ${event}\ndata: ${JSON.stringify(data)}\n\n`);
-  } catch (err) { /* connection already closed */ }
+  } catch (err) { }
 }
 
 function chatDeliver(userIds, event, data) {
@@ -2102,7 +2121,6 @@ function chatBroadcast(event, data) {
     for (const res of set) chatPush(res, event, data);
 }
 
-// Max 15 messages per 10 seconds per user.
 function chatRateOk(uid) {
   const now = Date.now();
   const recent = (chatRate.get(uid) || []).filter(t => now - t < 10000);
@@ -2200,7 +2218,6 @@ app.post('/api/chat/register', route(async (req, res) => {
     throw err;
   }
 
-  // New users start with the public chat marked as read.
   await pool.query(`
     INSERT INTO chat_reads(user_id,peer_id,last_read_id)
     SELECT $1::bigint, 0, COALESCE(MAX(id), 0)
@@ -2247,7 +2264,6 @@ app.get('/api/chat/me', chatAuth, route(async (req, res) => {
   res.json({ id: Number(req.chatUser.id), username: req.chatUser.username });
 }));
 
-// Live updates (Server-Sent Events): new messages and online status.
 app.get('/api/chat/stream', chatAuth, (req, res) => {
   const uid = String(req.chatUser.id);
   const name = req.chatUser.username;
@@ -2274,7 +2290,7 @@ app.get('/api/chat/stream', chatAuth, (req, res) => {
   if (wasOffline) chatBroadcast('presence', { username: name, online: true });
 
   const heartbeat = setInterval(() => {
-    try { res.write(': ping\n\n'); } catch (err) { /* closing */ }
+    try { res.write(': ping\n\n'); } catch (err) { }
   }, 25000);
 
   req.on('close', () => {
@@ -2282,7 +2298,6 @@ app.get('/api/chat/stream', chatAuth, (req, res) => {
     set.delete(res);
 
     if (set.size === 0) {
-      // Short grace period so page reloads don't flicker "offline".
       chatOfflineTimers.set(uid, setTimeout(async () => {
         const current = chatClients.get(uid);
         if (current && current.size) return;
@@ -2296,7 +2311,7 @@ app.get('/api/chat/stream', chatAuth, (req, res) => {
             [uid]
           );
           if (r.rows[0]) lastSeen = new Date(r.rows[0].last_seen).toISOString();
-        } catch (err) { /* keep fallback */ }
+        } catch (err) { }
 
         chatBroadcast('presence', { username: name, online: false, lastSeen });
       }, 5000));
@@ -2304,7 +2319,6 @@ app.get('/api/chat/stream', chatAuth, (req, res) => {
   });
 });
 
-// Chat list: the public chat plus every private conversation.
 app.get('/api/chat/dialogs', chatAuth, route(async (req, res) => {
   const me = req.chatUser;
 
@@ -2372,7 +2386,6 @@ app.get('/api/chat/dialogs', chatAuth, route(async (req, res) => {
   });
 }));
 
-// Message history, newest page first. Use ?before=<id> to page back.
 app.get('/api/chat/history', chatAuth, route(async (req, res) => {
   const me = req.chatUser;
   const peer = String(req.query.peer || '');
@@ -2493,7 +2506,6 @@ app.post('/api/chat/read', chatAuth, route(async (req, res) => {
   res.json({ ok: true });
 }));
 
-// Find people by the start of their username.
 app.get('/api/chat/users/search', chatAuth, route(async (req, res) => {
   const q = String(req.query.q || '').trim().slice(0, 16);
   if (q.length < 1) return res.json({ users: [] });
@@ -2511,7 +2523,6 @@ app.get('/api/chat/users/search', chatAuth, route(async (req, res) => {
   });
 }));
 
-// Look up one user by exact name.
 app.get('/api/chat/user', chatAuth, route(async (req, res) => {
   const p = await chatFindUser(String(req.query.name || ''));
   if (!p) return fail(res, 'User not found', 404);
@@ -2524,13 +2535,9 @@ app.get('/api/chat/user', chatAuth, route(async (req, res) => {
 }));
 
 // ---------- Exodus-style wallet API ----------
-// Every call needs a casino login (Authorization) so coins can move to and
-// from the casino balance. Wallet calls also need X-Wallet-Token, which comes
-// from opening the wallet with its password or its seed phrase.
 
 const walletTries = new Map();
 
-// Max 10 sign-in / create attempts per minute per casino user (slows guessing).
 function walletRateOk(uid) {
   const now = Date.now();
   const recent = (walletTries.get(uid) || []).filter(t => now - t < 60000);
@@ -2635,7 +2642,6 @@ app.post('/api/wallet/create', auth, route(async (req, res) => {
         [name]
       );
       if (dup.rows.length) return fail(res, 'Wallet name already taken');
-      // Otherwise it was a seed collision: draw a new phrase and retry.
     }
   }
 
@@ -2709,7 +2715,6 @@ app.get('/api/wallet/me', auth, walletAuth, route(async (req, res) => {
   });
 }));
 
-// Buy: spend casino coins, receive the asset in the wallet.
 app.post('/api/wallet/buy', auth, walletAuth, route(async (req, res) => {
   const sym = String((req.body || {}).sym || '');
   const c = WCOINS[sym];
@@ -2755,8 +2760,6 @@ app.post('/api/wallet/buy', auth, walletAuth, route(async (req, res) => {
   });
 }));
 
-// Sell: move the asset out of the wallet and into the casino balance of
-// whoever is logged in right now.
 app.post('/api/wallet/sell', auth, walletAuth, route(async (req, res) => {
   const sym = String((req.body || {}).sym || '');
   const c = WCOINS[sym];
@@ -2770,7 +2773,6 @@ app.post('/api/wallet/sell', auth, walletAuth, route(async (req, res) => {
   let q = 0;
 
   await transaction(async client => {
-    // Lock the user row first so lock order matches buy().
     await client.query('SELECT id FROM users WHERE id=$1 FOR UPDATE', [req.user.id]);
 
     const h = await client.query(`
@@ -2813,7 +2815,6 @@ app.post('/api/wallet/sell', auth, walletAuth, route(async (req, res) => {
   });
 }));
 
-// Send: move an asset to another wallet by name.
 app.post('/api/wallet/send', auth, walletAuth, route(async (req, res) => {
   const sym = String((req.body || {}).sym || '');
   if (!WCOINS[sym]) return fail(res, 'Unknown asset');
@@ -2837,7 +2838,6 @@ app.post('/api/wallet/send', auth, walletAuth, route(async (req, res) => {
   let q = 0;
 
   await transaction(async client => {
-    // Lock both holding rows in a fixed order to avoid deadlocks.
     await client.query(`
       SELECT wallet_id FROM wallet_holdings
       WHERE symbol=$1 AND wallet_id IN ($2,$3)
@@ -2882,7 +2882,6 @@ app.post('/api/wallet/send', auth, walletAuth, route(async (req, res) => {
   res.json({ msg: `Sent ${q.toPrecision(5)} ${sym} to ${dest.name}` });
 }));
 
-// Exchange: swap one asset for another inside the same wallet.
 app.post('/api/wallet/swap', auth, walletAuth, route(async (req, res) => {
   const from = String((req.body || {}).from || '');
   const to = String((req.body || {}).to || '');
@@ -2901,7 +2900,6 @@ app.post('/api/wallet/swap', auth, walletAuth, route(async (req, res) => {
   let got = 0;
 
   await transaction(async client => {
-    // Lock both holding rows in a fixed order.
     await client.query(`
       SELECT symbol FROM wallet_holdings
       WHERE wallet_id=$1 AND symbol IN ($2,$3)
@@ -2940,7 +2938,6 @@ app.post('/api/wallet/swap', auth, walletAuth, route(async (req, res) => {
         quantity=wallet_holdings.quantity+EXCLUDED.quantity
     `, [req.wallet.id, to, got]);
 
-    // note holds "<target symbol>:<amount received>"
     await client.query(`
       INSERT INTO wallet_txs(wallet_id,kind,symbol,quantity,coins,note)
       VALUES($1,'swap',$2,$3,0,$4)
@@ -2972,6 +2969,260 @@ app.get('/api/wallet/history', auth, walletAuth, route(async (req, res) => {
   });
 }));
 
+// ---------- Public Data Broker ----------
+
+const BROKER_SECTIONS = {
+  profile: { name: 'Identity & Chat',     emoji: '🪪', price: 250,
+    desc: 'Royal Chat (Telegram-style) username, online status, last seen, account age.' },
+  casino:  { name: 'Casino Balance',      emoji: '🎰', price: 1000,
+    desc: 'Current casino balance, leaderboard rank and whether they are mid-game.' },
+  trading: { name: 'Trading Portfolio',   emoji: '📈', price: 2500,
+    desc: 'Crypto trading positions, total portfolio value and trading activity.' },
+  luxury:  { name: 'Luxury Collection',   emoji: '💎', price: 5000,
+    desc: 'Every watch, car, mansion and artwork they own in the shop.' },
+  wallet:  { name: 'Exodus Wallet',       emoji: '👛', price: 10000,
+    desc: 'Linked Exodus wallet balance and holdings per asset (matched by identical name).' }
+};
+const BROKER_IDS = Object.keys(BROKER_SECTIONS);
+const BROKER_BUNDLE_DISCOUNT = 0.25;
+const brokerBundleParts = () =>
+  BROKER_IDS.map(id => ({ id, price: Math.floor(BROKER_SECTIONS[id].price * (1 - BROKER_BUNDLE_DISCOUNT)) }));
+const brokerBundlePrice = () => brokerBundleParts().reduce((s, p) => s + p.price, 0);
+
+const brokerIso = d => (d ? new Date(d).toISOString() : null);
+
+const BROKER_BUILDERS = {
+  async profile(c, t) {
+    const chat = await c.query(
+      'SELECT id, username, last_seen, created_at FROM chat_users WHERE LOWER(username)=LOWER($1)',
+      [t.username]
+    );
+    const u = chat.rows[0];
+    return {
+      casinoUsername: t.username,
+      memberSince: brokerIso(t.created_at),
+      chat: u ? {
+        username: u.username,
+        online: chatOnline(u.id),
+        lastSeen: brokerIso(u.last_seen),
+        joined: brokerIso(u.created_at)
+      } : null
+    };
+  },
+
+  async casino(c, t) {
+    const bal = Number((await c.query('SELECT balance FROM users WHERE id=$1', [t.id])).rows[0].balance);
+    const rank = await c.query(
+      'SELECT COUNT(*) FILTER (WHERE balance > $1) AS ahead, COUNT(*) AS total FROM users',
+      [bal]
+    );
+    const game = await c.query('SELECT type FROM games WHERE user_id=$1', [t.id]);
+    return {
+      balance: bal,
+      rank: Number(rank.rows[0].ahead) + 1,
+      players: Number(rank.rows[0].total),
+      activeGame: game.rows[0] ? game.rows[0].type : null
+    };
+  },
+
+  async trading(c, t) {
+    const h = await c.query(
+      'SELECT symbol, quantity, cost_basis FROM holdings WHERE user_id=$1 AND quantity > 0',
+      [t.id]
+    );
+    const positions = h.rows
+      .filter(r => COINS[r.symbol])
+      .map(r => {
+        const coin = COINS[r.symbol];
+        const qty = Number(r.quantity);
+        return {
+          sym: r.symbol, name: coin.name, emoji: coin.emoji,
+          qty, value: qty * coin.price, cost: Number(r.cost_basis)
+        };
+      })
+      .sort((a, b) => b.value - a.value);
+    const tr = await c.query(
+      'SELECT COUNT(*) AS n, MAX(created_at) AS last FROM trades WHERE user_id=$1',
+      [t.id]
+    );
+    const orders = await c.query('SELECT COUNT(*) AS n FROM auto_orders WHERE user_id=$1', [t.id]);
+    return {
+      positions,
+      totalValue: positions.reduce((s, p) => s + p.value, 0),
+      trades: Number(tr.rows[0].n),
+      lastTrade: brokerIso(tr.rows[0].last),
+      autoOrders: Number(orders.rows[0].n)
+    };
+  },
+
+  async luxury(c, t) {
+    const r = await c.query('SELECT item_id, price_paid FROM shop_purchases WHERE user_id=$1', [t.id]);
+    const items = r.rows
+      .filter(x => SHOP_BY_ID.has(x.item_id))
+      .map(x => {
+        const it = SHOP_BY_ID.get(x.item_id);
+        return { name: it.name, emoji: it.emoji, tier: it.tier, paid: Number(x.price_paid) };
+      })
+      .sort((a, b) => b.paid - a.paid);
+    return {
+      count: items.length,
+      totalPaid: items.reduce((s, i) => s + i.paid, 0),
+      items: items.slice(0, 12)
+    };
+  },
+
+  async wallet(c, t) {
+    const w = await c.query('SELECT id, name, created_at FROM wallets WHERE LOWER(name)=LOWER($1)', [t.username]);
+    if (!w.rows.length) return { found: false };
+    const wallet = w.rows[0];
+    const assets = walletAssets(await walletHoldings(c, wallet.id))
+      .filter(a => a.qty > 0)
+      .map(a => ({ sym: a.sym, name: a.name, glyph: a.glyph, qty: a.qty, value: a.value }))
+      .sort((a, b) => b.value - a.value);
+    const txs = await c.query('SELECT COUNT(*) AS n FROM wallet_txs WHERE wallet_id=$1', [wallet.id]);
+    return {
+      found: true,
+      walletName: wallet.name,
+      created: brokerIso(wallet.created_at),
+      total: assets.reduce((s, a) => s + a.value, 0),
+      assets,
+      transactions: Number(txs.rows[0].n)
+    };
+  }
+};
+
+async function brokerTarget(client, name) {
+  if (!validName(name)) return null;
+  const r = await client.query(
+    'SELECT id, username, created_at FROM users WHERE LOWER(username)=LOWER($1)',
+    [name]
+  );
+  return r.rows[0] || null;
+}
+
+const brokerOwned = async (buyerId, targetId) => {
+  const r = await pool.query(
+    'SELECT section, data, price_paid, purchased_at FROM broker_reports WHERE buyer_id=$1 AND target_id=$2',
+    [buyerId, targetId]
+  );
+  return new Map(r.rows.map(x => [x.section, x]));
+};
+
+async function brokerView(buyerId, t) {
+  const owned = await brokerOwned(buyerId, t.id);
+  return {
+    name: t.username,
+    sections: BROKER_IDS.map(id => {
+      const s = BROKER_SECTIONS[id];
+      const o = owned.get(id);
+      return {
+        id, name: s.name, emoji: s.emoji, desc: s.desc, price: s.price,
+        owned: !!o,
+        paid: o ? Number(o.price_paid) : null,
+        purchasedAt: o ? brokerIso(o.purchased_at) : null,
+        data: o ? o.data : null
+      };
+    })
+  };
+}
+
+app.get('/api/broker', auth, route(async (req, res) => {
+  const uid = req.user.id;
+  const mine = await pool.query(`
+    SELECT u.username, COUNT(*) AS sections, MAX(r.purchased_at) AS last
+    FROM broker_reports r JOIN users u ON u.id = r.target_id
+    WHERE r.buyer_id = $1
+    GROUP BY u.username ORDER BY MAX(r.purchased_at) DESC LIMIT 50
+  `, [uid]);
+  const exp = await pool.query(
+    'SELECT COALESCE(SUM(buys),0) AS n FROM broker_reports WHERE target_id=$1',
+    [uid]
+  );
+
+  res.json({
+    balance: await getBal(uid),
+    sections: BROKER_IDS.map(id => ({ id, ...BROKER_SECTIONS[id] })),
+    bundlePrice: brokerBundlePrice(),
+    bundleDiscount: BROKER_BUNDLE_DISCOUNT,
+    exposure: Number(exp.rows[0].n),
+    purchased: mine.rows.map(r => ({
+      name: r.username,
+      sections: Number(r.sections),
+      last: brokerIso(r.last)
+    }))
+  });
+}));
+
+app.get('/api/broker/search', auth, route(async (req, res) => {
+  const q = String(req.query.q || '').trim();
+  if (!q || q.length > 16) return res.json({ users: [] });
+  const like = '%' + q.replace(/[\\%_]/g, '\\$&') + '%';
+  const r = await pool.query(`
+    SELECT username FROM users
+    WHERE id <> $1 AND username ILIKE $2 ESCAPE '\\'
+    ORDER BY (LOWER(username) = LOWER($3)) DESC, LOWER(username)
+    LIMIT 8
+  `, [req.user.id, like, q]);
+  res.json({ users: r.rows.map(x => x.username) });
+}));
+
+app.get('/api/broker/profile', auth, route(async (req, res) => {
+  const t = await brokerTarget(pool, String(req.query.name || ''));
+  if (!t) return fail(res, 'Player not found', 404);
+  if (t.id === req.user.id) return fail(res, 'You cannot buy a report on yourself');
+  res.json({ balance: await getBal(req.user.id), ...(await brokerView(req.user.id, t)) });
+}));
+
+app.post('/api/broker/buy', auth, route(async (req, res) => {
+  const body = req.body || {};
+  const uid = req.user.id;
+  const bundle = body.sections === 'all';
+
+  let parts;
+  if (bundle) {
+    parts = brokerBundleParts();
+  } else {
+    const ids = Array.isArray(body.sections) ? [...new Set(body.sections.map(String))] : [];
+    if (!ids.length || ids.length > BROKER_IDS.length || ids.some(id => !BROKER_SECTIONS[id]))
+      return fail(res, 'Choose what to buy');
+    parts = ids.map(id => ({ id, price: BROKER_SECTIONS[id].price }));
+  }
+  const total = parts.reduce((s, p) => s + p.price, 0);
+
+  let target;
+  await transaction(async client => {
+    target = await brokerTarget(client, String(body.name || ''));
+    if (!target) throw shopFail('Player not found', 404);
+    if (target.id === uid) throw shopFail('You cannot buy a report on yourself');
+
+    const b = await client.query('SELECT balance FROM users WHERE id=$1 FOR UPDATE', [uid]);
+    if (!b.rows.length) throw shopFail('User not found', 404);
+    if (Number(b.rows[0].balance) < total) throw shopFail('Not enough balance');
+
+    for (const p of parts) {
+      const data = await BROKER_BUILDERS[p.id](client, target);
+      await client.query(`
+        INSERT INTO broker_reports(buyer_id, target_id, section, price_paid, data)
+        VALUES($1,$2,$3,$4,$5::jsonb)
+        ON CONFLICT(buyer_id, target_id, section) DO UPDATE SET
+          price_paid = EXCLUDED.price_paid,
+          data = EXCLUDED.data,
+          purchased_at = NOW(),
+          buys = broker_reports.buys + 1
+      `, [uid, target.id, p.id, p.price, JSON.stringify(data)]);
+    }
+
+    await client.query('UPDATE users SET balance=balance-$1 WHERE id=$2', [total, uid]);
+  });
+
+  res.json({
+    balance: await getBal(uid),
+    paid: total,
+    msg: `Report on ${target.username} purchased`,
+    ...(await brokerView(uid, target))
+  });
+}));
+
 // ---------- Errors and startup ----------
 
 app.use((err, req, res, next) => {
@@ -2987,7 +3238,6 @@ app.use((err, req, res, next) => {
 async function start() {
   await initDatabase();
 
-  // Warm-up ticks only build price history; they must never trigger sells.
   for (let i = 0; i < HIST; i++) tick(false);
 
   setInterval(() => tick(), 1000);
@@ -2996,8 +3246,6 @@ async function start() {
     persistMarket().catch(err => console.error('Market save error:', err));
   }, 5000);
 
-  // Render's free tier sleeps after ~15 min without traffic, which pauses the
-  // market and auto-sell. Pinging ourselves keeps the server awake.
   const selfUrl = process.env.RENDER_EXTERNAL_URL;
   if (selfUrl && typeof fetch === 'function') {
     setInterval(() => {
