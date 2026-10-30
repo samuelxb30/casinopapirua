@@ -560,7 +560,7 @@ td input{width:110px}
     <div class="shop-head">
       <div>
         <h2>🕵️ Public Data Broker</h2>
-        <p>Buy a snapshot report on any player: chat username, balances, trading portfolio, luxury collection and their Exodus wallet.</p>
+        <p>Buy a snapshot report on any player: their linked Royal Chat and Exodus accounts (whatever the names), balances, trading portfolio and luxury collection.</p>
       </div>
       <div class="shop-stats">
         <div class="shop-stat"><small>Reports you own</small><strong id="brkBought">0</strong></div>
@@ -578,7 +578,7 @@ td input{width:110px}
     <div id="brkProfile" class="hide"></div>
     <div class="brk-sub">Your purchased reports</div>
     <div class="brk-history" id="brkHistory"></div>
-    <div class="case-note">Virtual coins only. Reports are snapshots taken at purchase time and only use data from this game; passwords, seed phrases and wallet access are never for sale.</div>
+    <div class="case-note">Virtual coins only. Reports are snapshots taken at purchase time and only use data from this game; passwords, seed phrases and wallet access are never for sale. Chat and wallet accounts are linked to a player when they use them while signed in to the casino.</div>
   </section>
 
   <div class="foot">Virtual currency with no cash value. For entertainment only.</div>
@@ -1369,12 +1369,16 @@ function brkRenderData(id,d,body){
       ['Casino username',d.casinoUsername],
       ['Member since',brkDate(d.memberSince)]
     ]);
-    if(d.chat)brkRows(body,[
-      ['Royal Chat username','@'+d.chat.username],
-      ['Status',d.chat.online?'🟢 online (at purchase)':'⚪ last seen '+brkDate(d.chat.lastSeen)],
-      ['Chat joined',brkDate(d.chat.joined)]
-    ]);
-    else brkRows(body,[['Royal Chat','No chat account with this name']]);
+    const chats=d.chats||(d.chat?[d.chat]:[]);
+    if(!chats.length)brkRows(body,[['Royal Chat','No chat account linked to this player']]);
+    for(const c of chats){
+      if(chats.length>1)body.append(brkEl('div','brk-sub','Chat @'+c.username));
+      brkRows(body,[
+        ['Royal Chat username','@'+c.username],
+        ['Status',c.online?'🟢 online (at purchase)':'⚪ last seen '+brkDate(c.lastSeen)],
+        ['Chat joined',brkDate(c.joined)]
+      ]);
+    }
   }else if(id==='casino'){
     brkRows(body,[
       ['Balance',fmt(d.balance)+' coins'],
@@ -1396,14 +1400,19 @@ function brkRenderData(id,d,body){
     ]);
     brkSubList(body,d.count>d.items.length?'Most expensive items':'Items',d.items.map(i=>[i.emoji+' '+i.name,fmt(i.paid)]));
   }else if(id==='wallet'){
-    if(!d.found){brkRows(body,[['Exodus wallet','No wallet found under this name']]);return;}
-    brkRows(body,[
-      ['Wallet name',d.walletName],
-      ['Total balance','$'+brkNum(d.total)],
-      ['Transactions',fmt(d.transactions)],
-      ['Created',brkDate(d.created)]
-    ]);
-    brkSubList(body,'Assets',d.assets.map(a=>[a.glyph+' '+a.name,brkQty(a.qty)+' ≈ $'+brkNum(a.value)]));
+    const wallets=d.wallets||(d.found?[d]:[]);
+    if(!wallets.length){brkRows(body,[['Exodus wallet','No wallet linked to this player']]);return;}
+    if(wallets.length>1)brkRows(body,[['Wallets linked',String(wallets.length)],['Combined balance','$'+brkNum(wallets.reduce((s,w)=>s+w.total,0))]]);
+    for(const w of wallets){
+      if(wallets.length>1)body.append(brkEl('div','brk-sub','Wallet '+w.walletName));
+      brkRows(body,[
+        ['Wallet name',w.walletName],
+        ['Total balance','$'+brkNum(w.total)],
+        ['Transactions',fmt(w.transactions)],
+        ['Created',brkDate(w.created)]
+      ]);
+      brkSubList(body,'Assets',w.assets.map(a=>[a.glyph+' '+a.name,brkQty(a.qty)+' ≈ $'+brkNum(a.value)]));
+    }
   }
 }
 
@@ -1647,7 +1656,7 @@ async function tgApi(path,body){
   try{
     const r=await fetch('/api/chat/'+path,{
       method:body?'POST':'GET',
-      headers:{'Content-Type':'application/json',Authorization:tgToken||''},
+      headers:{'Content-Type':'application/json',Authorization:tgToken||'','X-Casino-Token':token||''},
       body:body?JSON.stringify(body):undefined
     });
     const d=await r.json().catch(()=>({}));
@@ -1808,7 +1817,7 @@ async function tgStartStream(){
   tgStreamCtl=ctl;
   while(!ctl.signal.aborted){
     try{
-      const r=await fetch('/api/chat/stream',{headers:{Authorization:tgToken||''},signal:ctl.signal});
+      const r=await fetch('/api/chat/stream',{headers:{Authorization:tgToken||'','X-Casino-Token':token||''},signal:ctl.signal});
       if(r.status===401){tgLogout(true);return;}
       if(!r.ok||!r.body)throw new Error('stream');
       tgResync();

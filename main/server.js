@@ -207,15 +207,66 @@ const SHOP_ITEMS = [
   { id: 'w07', category: 'watches', emoji: '💎', tier: 'legendary', price: 9500000,   name: "Richard Mille RM 056 Sapphire",        desc: "Case carved from a block of sapphire crystal. Wearable art that costs a fortune." },
   { id: 'w08', category: 'watches', emoji: '👑', tier: 'legendary', price: 40000000,  name: "Patek Philippe Henry Graves Supercomplication", desc: "The legendary 1932 pocket watch with 24 complications. Auction record holder in its day." },
   { id: 'c01', category: 'cars', emoji: '🚗', tier: 'common',    price: 18000,      name: "Honda Civic",                      desc: "Reliable, efficient and surprisingly fun to drive." },
+  { id: 'c13', category: 'cars', emoji: '🚙', tier: 'common', price: 22000, name: "Toyota Corolla", desc: "The world's best-selling nameplate. Cheap to run and almost impossible to kill." },
+  { id: 'c14', category: 'cars', emoji: '🌤️', tier: 'common', price: 30000, name: "Mazda MX-5 Miata", desc: "Lightweight two-seat roadster that proves fun does not need power." },
+  { id: 'c15', category: 'cars', emoji: '🏞️', tier: 'common', price: 40000, name: "Jeep Wrangler Rubicon", desc: "Removable doors, locking diffs and a trail-ready attitude." },
+  { id: 'c16', category: 'cars', emoji: '🔵', tier: 'common', price: 42000, name: "Audi A4 Quattro", desc: "A refined sedan with all-wheel-drive grip in any weather." },
+  { id: 'c17', category: 'cars', emoji: '🏁', tier: 'common', price: 43000, name: "Subaru WRX STI", desc: "Rally-bred turbo four with a big wing and a loyal fan base." },
   { id: 'c02', category: 'cars', emoji: '🐎', tier: 'common',    price: 45000,      name: "Ford Mustang GT",                  desc: "5.0L V8 muscle with an unmistakable rumble." },
+  { id: 'c18', category: 'cars', emoji: '🚗', tier: 'common', price: 45000, name: "BMW 330i", desc: "The classic sport sedan. Balanced, quick and easy to live with." },
+  { id: 'c19', category: 'cars', emoji: '⛳', tier: 'common', price: 46000, name: "Volkswagen Golf R", desc: "A hot hatch with a daily-driver suit and a 4Motion punch." },
+  { id: 'c20', category: 'cars', emoji: '🅿️', tier: 'uncommon', price: 55000, name: "Toyota GR Supra", desc: "Turbo straight-six, rear-wheel drive and a famous nameplate reborn." },
+  { id: 'c21', category: 'cars', emoji: '🔷', tier: 'uncommon', price: 60000, name: "Audi RS3", desc: "A five-cylinder rocket in a compact sedan body, with a very distinctive sound." },
+  { id: 'c22', category: 'cars', emoji: '🌲', tier: 'uncommon', price: 62000, name: "Volvo XC90 T8", desc: "Scandinavian calm, a plug-in hybrid drivetrain and seven seats." },
+  { id: 'c23', category: 'cars', emoji: '🔥', tier: 'uncommon', price: 70000, name: "Dodge Challenger SRT Hellcat", desc: "Supercharged V8 muscle with over 700 horsepower and a lot of noise." },
+  { id: 'c24', category: 'cars', emoji: '🧭', tier: 'uncommon', price: 72000, name: "Land Rover Defender 110", desc: "A reborn off-road icon that goes almost anywhere." },
+  { id: 'c25', category: 'cars', emoji: '🛣️', tier: 'uncommon', price: 75000, name: "Audi Q8", desc: "A coupe-style SUV with a big presence and a luxurious cabin." },
+  { id: 'c26', category: 'cars', emoji: '🦅', tier: 'uncommon', price: 80000, name: "Ford F-150 Raptor", desc: "A desert-racing pickup with long-travel suspension and a twin-turbo V6." },
+  { id: 'c27', category: 'cars', emoji: '😈', tier: 'uncommon', price: 80000, name: "Mercedes-AMG C 63 S", desc: "Hand-built V8 character in a compact executive sedan." },
+  { id: 'c28', category: 'cars', emoji: '💚', tier: 'uncommon', price: 85000, name: "Alfa Romeo Giulia Quadrifoglio", desc: "Ferrari-derived twin-turbo V6 wrapped in Italian passion." },
+  { id: 'c29', category: 'cars', emoji: '🏆', tier: 'uncommon', price: 90000, name: "BMW M3 Competition", desc: "The benchmark super-sedan, with a twin-turbo six and an aggressive grille." },
+  { id: 'c35', category: 'cars', emoji: '🏯', tier: 'rare', price: 100000, name: "Lexus LC 500", desc: "A naturally aspirated V8 grand tourer with some of the best interiors around." },
+  { id: 'c30', category: 'cars', emoji: '🐆', tier: 'uncommon', price: 110000, name: "Jaguar F-Type R", desc: "Supercharged V8, a snarling exhaust and a long-hood coupe profile." },
+  { id: 'c31', category: 'cars', emoji: '🇺🇸', tier: 'rare', price: 110000, name: "Chevrolet Corvette Z06", desc: "A flat-plane-crank V8 that screams to 8,600 rpm in a mid-engine package." },
+  { id: 'c32', category: 'cars', emoji: '🇯🇵', tier: 'rare', price: 115000, name: "Nissan GT-R Nismo", desc: "Godzilla. Twin-turbo V6, all-wheel drive and a track-ready reputation." },
   { id: 'c03', category: 'cars', emoji: '🚘', tier: 'uncommon',  price: 120000,     name: "Porsche 911 Carrera",              desc: "The everyday sports car. Rear engine, timeless shape." },
+  { id: 'c33', category: 'cars', emoji: '🏔️', tier: 'rare', price: 120000, name: "Range Rover Autobiography", desc: "The luxury SUV that crosses the city, the Alps and the red carpet." },
+  { id: 'c34', category: 'cars', emoji: '🚘', tier: 'rare', price: 125000, name: "Audi RS6 Avant", desc: "A 600-horsepower family wagon that embarrasses supercars." },
+  { id: 'c36', category: 'cars', emoji: '⭐', tier: 'rare', price: 130000, name: "Mercedes-Benz S 580", desc: "The flagship limousine, packed with comfort and technology." },
+  { id: 'c37', category: 'cars', emoji: '🏎️', tier: 'rare', price: 135000, name: "BMW X5 M Competition", desc: "A twin-turbo V8 super-SUV with sports-car dynamics." },
+  { id: 'c38', category: 'cars', emoji: '💥', tier: 'rare', price: 140000, name: "Mercedes-AMG E 63 S", desc: "A 603-horsepower executive sedan with a drift mode." },
+  { id: 'c39', category: 'cars', emoji: '🔋', tier: 'rare', price: 150000, name: "Audi e-tron GT RS", desc: "Electric grand tourer with a sharp design and instant acceleration." },
+  { id: 'c40', category: 'cars', emoji: '🔩', tier: 'rare', price: 150000, name: "BMW M5 CS", desc: "The fastest and most extreme M5 ever built, with a carbon-fiber diet." },
+  { id: 'c41', category: 'cars', emoji: '🦅', tier: 'rare', price: 160000, name: "BMW M4 CSL", desc: "A lightweight track-focused coupe with a big wing and rear-drive focus." },
+  { id: 'c42', category: 'cars', emoji: '🔌', tier: 'rare', price: 200000, name: "Porsche Taycan Turbo S", desc: "Electric performance sedan with launch control and a Porsche badge." },
+  { id: 'c43', category: 'cars', emoji: '🦈', tier: 'rare', price: 210000, name: "Mercedes-AMG GT R", desc: "The Beast of the Green Hell. Front-engine V8 with an active rear wing." },
+  { id: 'c44', category: 'cars', emoji: '🐺', tier: 'rare', price: 225000, name: "Porsche 911 GT3 RS", desc: "A track weapon with a naturally aspirated flat-six and a giant swan-neck wing." },
+  { id: 'c45', category: 'cars', emoji: '🌑', tier: 'rare', price: 230000, name: "Audi R8 V10 Performance", desc: "A mid-engine V10 supercar you can drive every day." },
+  { id: 'c46', category: 'cars', emoji: '🧊', tier: 'epic', price: 230000, name: "Lamborghini Urus", desc: "The super SUV. Twin-turbo V8 and a raging-bull attitude." },
   { id: 'c04', category: 'cars', emoji: '⚡', tier: 'rare',      price: 250000,     name: "Tesla Model S Plaid",              desc: "Over 1,000 horsepower and a sub-2-second 0 to 60 mph launch." },
+  { id: 'c47', category: 'cars', emoji: '⚓', tier: 'epic', price: 250000, name: "Bentley Continental GT Speed", desc: "A handcrafted grand tourer with a twelve-cylinder heart." },
+  { id: 'c56', category: 'cars', emoji: '🌠', tier: 'epic', price: 250000, name: "Mercedes-Benz SLS AMG", desc: "Gullwing doors and a hand-built 6.2L V8. A modern classic." },
+  { id: 'c48', category: 'cars', emoji: '🎩', tier: 'epic', price: 270000, name: "Aston Martin DB11", desc: "British elegance with a twin-turbo V12 and a long, graceful bonnet." },
+  { id: 'c50', category: 'cars', emoji: '🌊', tier: 'epic', price: 280000, name: "Maserati MC20", desc: "A carbon-fiber Italian supercar with a Nettuno twin-turbo V6." },
+  { id: 'c49', category: 'cars', emoji: '🔴', tier: 'epic', price: 300000, name: "Ferrari F8 Tributo", desc: "Mid-engine V8 with 710 horsepower and a Prancing Horse badge." },
+  { id: 'c51', category: 'cars', emoji: '⚫', tier: 'epic', price: 330000, name: "Mercedes-Maybach S 680", desc: "V12 luxury, rear lounge seats and a champagne-ready interior." },
+  { id: 'c52', category: 'cars', emoji: '🐂', tier: 'epic', price: 390000, name: "Rolls-Royce Cullinan", desc: "The ultimate luxury SUV with a starlight headliner." },
   { id: 'c05', category: 'cars', emoji: '🛻', tier: 'rare',      price: 400000,     name: "Mercedes-AMG G 63",                desc: "A boxy off-roader with a hand-built twin-turbo V8 and a very loud personality." },
+  { id: 'c55', category: 'cars', emoji: '👻', tier: 'epic', price: 500000, name: "Rolls-Royce Phantom", desc: "The whisper-quiet flagship of the Goodwood factory." },
+  { id: 'c53', category: 'cars', emoji: '🌟', tier: 'epic', price: 520000, name: "Lamborghini Aventador SVJ", desc: "A naturally aspirated V12 with active aerodynamics and a track record." },
+  { id: 'c54', category: 'cars', emoji: '🏁', tier: 'epic', price: 530000, name: "Ferrari SF90 Stradale", desc: "A plug-in hybrid supercar with nearly 1,000 horsepower." },
   { id: 'c06', category: 'cars', emoji: '🐂', tier: 'epic',      price: 750000,     name: "Lamborghini Huracán",              desc: "V10 power, scissor-sharp lines, and pure Italian theatre." },
   { id: 'c07', category: 'cars', emoji: '🏁', tier: 'epic',      price: 1400000,    name: "McLaren 720S",                     desc: "Carbon-fiber tub, 710 horsepower, and a Formula 1 attitude." },
+  { id: 'c57', category: 'cars', emoji: '🏎️', tier: 'epic', price: 1400000, name: "Ferrari LaFerrari", desc: "The hybrid V12 hypercar limited to 499 examples." },
+  { id: 'c58', category: 'cars', emoji: '🔶', tier: 'epic', price: 1500000, name: "McLaren P1", desc: "A hybrid hypercar that rewrote the track-day rulebook." },
+  { id: 'c59', category: 'cars', emoji: '🚀', tier: 'epic', price: 1800000, name: "Porsche 918 Spyder", desc: "A plug-in hybrid hypercar with a removable roof and a Nürburgring record." },
+  { id: 'c60', category: 'cars', emoji: '⚡', tier: 'epic', price: 2700000, name: "Mercedes-AMG One", desc: "A Formula 1 engine in a road car. Barely street legal." },
   { id: 'c08', category: 'cars', emoji: '🏎️', tier: 'epic',      price: 2800000,    name: "Ferrari 812 Superfast",            desc: "Front-engine V12 grand tourer, one of the last great naturally aspirated Ferraris." },
+  { id: 'c61', category: 'cars', emoji: '🦂', tier: 'legendary', price: 3500000, name: "Koenigsegg Jesko", desc: "A Swedish hypercar with 1,600 horsepower and a 300 mph target." },
   { id: 'c09', category: 'cars', emoji: '🌪️', tier: 'legendary', price: 5000000,    name: "Pagani Huayra",                    desc: "Hand-built Italian hypercar where every bolt is a work of art." },
+  { id: 'c62', category: 'cars', emoji: '💨', tier: 'legendary', price: 8000000, name: "Bugatti Veyron Super Sport", desc: "The first production car to pass 250 mph." },
   { id: 'c10', category: 'cars', emoji: '🚀', tier: 'legendary', price: 12000000,   name: "Bugatti Chiron",                   desc: "8.0L quad-turbo W16 with 1,500 horsepower and a top speed over 260 mph." },
+  { id: 'c63', category: 'cars', emoji: '🏆', tier: 'legendary', price: 20000000, name: "Bugatti La Voiture Noire", desc: "A one-off carbon-fiber masterpiece, among the priciest new cars ever." },
   { id: 'c11', category: 'cars', emoji: '🏆', tier: 'legendary', price: 30000000,   name: "1962 Ferrari 250 GTO",             desc: "Perhaps the most valuable classic car ever. Only 36 were built." },
   { id: 'c12', category: 'cars', emoji: '🛡️', tier: 'legendary', price: 60000000,   name: "Rolls-Royce Boat Tail",            desc: "A coachbuilt, one-of-three masterpiece with a hidden picnic set in the rear." },
   { id: 'r01', category: 'realestate', emoji: '🏢', tier: 'common',    price: 40000,        name: "Studio Apartment in Brooklyn, New York",    desc: "One room, exposed brick, and a subway stop on the corner." },
@@ -461,6 +512,24 @@ async function initDatabase() {
     CREATE INDEX IF NOT EXISTS broker_reports_target_idx ON broker_reports(target_id)
   `);
 
+  // ----- Account links (casino user <-> chat account / wallet) -----
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS chat_links (
+      user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      chat_user_id BIGINT NOT NULL REFERENCES chat_users(id) ON DELETE CASCADE,
+      linked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (user_id, chat_user_id)
+    )
+  `);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS wallet_links (
+      user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      wallet_id BIGINT NOT NULL REFERENCES wallets(id) ON DELETE CASCADE,
+      linked_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      PRIMARY KEY (user_id, wallet_id)
+    )
+  `);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS site_settings (
       key TEXT PRIMARY KEY,
@@ -552,6 +621,44 @@ async function newSession(uid) {
     [token, uid]
   );
   return token;
+}
+
+// ---------- Account linking (used by the Data Broker) ----------
+// A casino player can own Royal Chat accounts and Exodus wallets whose names
+// differ from the casino username. We record the link whenever the player is
+// signed in to the casino while using them.
+const linkCache = new Set();
+
+async function linkWalletAccount(userId, walletId) {
+  const key = `w${userId}:${walletId}`;
+  if (linkCache.has(key)) return;
+  try {
+    await pool.query(`
+      INSERT INTO wallet_links(user_id, wallet_id) VALUES($1,$2)
+      ON CONFLICT DO NOTHING
+    `, [userId, walletId]);
+    linkCache.add(key);
+  } catch (err) {
+    console.error('Wallet link error:', err);
+  }
+}
+
+async function linkChatAccount(req, chatId) {
+  const token = String(req.headers['x-casino-token'] || '');
+  if (!token || token.length > 200) return;
+  const key = `c${token}:${chatId}`;
+  if (linkCache.has(key)) return;
+  try {
+    const r = await pool.query('SELECT user_id FROM sessions WHERE token=$1', [token]);
+    if (!r.rows.length) return;
+    await pool.query(`
+      INSERT INTO chat_links(user_id, chat_user_id) VALUES($1,$2)
+      ON CONFLICT DO NOTHING
+    `, [r.rows[0].user_id, chatId]);
+    linkCache.add(key);
+  } catch (err) {
+    console.error('Chat link error:', err);
+  }
 }
 
 const auth = route(async (req, res, next) => {
@@ -2188,6 +2295,7 @@ const chatAuth = route(async (req, res, next) => {
   if (!r.rows.length) return fail(res, 'Please log in to chat', 401);
 
   req.chatUser = r.rows[0];
+  await linkChatAccount(req, req.chatUser.id);
   next();
 });
 
@@ -2233,6 +2341,7 @@ app.post('/api/chat/register', route(async (req, res) => {
     FROM chat_messages WHERE recipient_id IS NULL
   `, [uid]);
 
+  await linkChatAccount(req, uid);
   res.json({ token: await chatNewSession(uid) });
 }));
 
@@ -2258,6 +2367,7 @@ app.post('/api/chat/login', route(async (req, res) => {
   if (a.length !== b.length || !crypto.timingSafeEqual(a, b))
     return fail(res, 'Wrong username or password', 401);
 
+  await linkChatAccount(req, u.id);
   res.json({ token: await chatNewSession(u.id) });
 }));
 
@@ -2566,12 +2676,13 @@ setInterval(() => {
   }
 }, 60000).unref();
 
-async function walletNewSession(walletId) {
+async function walletNewSession(walletId, userId) {
   const token = crypto.randomBytes(32).toString('hex');
   await pool.query(
     'INSERT INTO wallet_sessions(token,wallet_id) VALUES($1,$2)',
     [token, walletId]
   );
+  if (userId) await linkWalletAccount(userId, walletId);
   return token;
 }
 
@@ -2592,6 +2703,7 @@ const walletAuth = route(async (req, res, next) => {
     return res.status(401).json({ error: 'Wallet session expired', wallet: true });
 
   req.wallet = r.rows[0];
+  if (req.user) await linkWalletAccount(req.user.id, req.wallet.id);
   next();
 });
 
@@ -2641,7 +2753,7 @@ app.post('/api/wallet/create', auth, route(async (req, res) => {
         'INSERT INTO wallets(name,password_hash,seed_hash) VALUES($1,$2,$3) RETURNING id',
         [name, passwordHash, seedHash(seed)]
       );
-      const token = await walletNewSession(r.rows[0].id);
+      const token = await walletNewSession(r.rows[0].id, req.user.id);
       return res.json({ token, name, seed });
     } catch (err) {
       if (err.code !== '23505') throw err;
@@ -2682,7 +2794,7 @@ app.post('/api/wallet/login', auth, route(async (req, res) => {
   if (a.length !== b.length || !crypto.timingSafeEqual(a, b))
     return fail(res, 'Wrong wallet name or password', 401);
 
-  res.json({ token: await walletNewSession(w.id), name: w.name });
+  res.json({ token: await walletNewSession(w.id, req.user.id), name: w.name });
 }));
 
 app.post('/api/wallet/login-seed', auth, route(async (req, res) => {
@@ -2701,7 +2813,7 @@ app.post('/api/wallet/login-seed', auth, route(async (req, res) => {
 
   if (!r.rows.length) return fail(res, 'Invalid seed phrase', 401);
 
-  res.json({ token: await walletNewSession(r.rows[0].id), name: r.rows[0].name });
+  res.json({ token: await walletNewSession(r.rows[0].id, req.user.id), name: r.rows[0].name });
 }));
 
 app.post('/api/wallet/logout', auth, route(async (req, res) => {
@@ -2982,7 +3094,7 @@ app.get('/api/wallet/history', auth, walletAuth, route(async (req, res) => {
 
 const BROKER_SECTIONS = {
   profile: { name: 'Identity & Chat',     emoji: '🪪', price: 250,
-    desc: 'Royal Chat (Telegram-style) username, online status, last seen, account age.' },
+    desc: 'Royal Chat (Telegram-style) accounts linked to this player, online status, last seen, account age.' },
   casino:  { name: 'Casino Balance',      emoji: '🎰', price: 1000,
     desc: 'Current casino balance, leaderboard rank and whether they are mid-game.' },
   trading: { name: 'Trading Portfolio',   emoji: '📈', price: 2500,
@@ -2990,7 +3102,7 @@ const BROKER_SECTIONS = {
   luxury:  { name: 'Luxury Collection',   emoji: '💎', price: 5000,
     desc: 'Every watch, car, mansion and artwork they own in the shop.' },
   wallet:  { name: 'Exodus Wallet',       emoji: '👛', price: 10000,
-    desc: 'Linked Exodus wallet balance and holdings per asset (matched by identical name).' }
+    desc: 'Every Exodus wallet linked to this player, with balance and holdings per asset.' }
 };
 const BROKER_IDS = Object.keys(BROKER_SECTIONS);
 const BROKER_BUNDLE_DISCOUNT = 0.25;
@@ -3002,20 +3114,25 @@ const brokerIso = d => (d ? new Date(d).toISOString() : null);
 
 const BROKER_BUILDERS = {
   async profile(c, t) {
-    const chat = await c.query(
-      'SELECT id, username, last_seen, created_at FROM chat_users WHERE LOWER(username)=LOWER($1)',
-      [t.username]
-    );
-    const u = chat.rows[0];
+    // Chat accounts linked to this casino player, plus a legacy match on the same name.
+    const chat = await c.query(`
+      SELECT u.id, u.username, u.last_seen, u.created_at
+      FROM chat_users u
+      WHERE u.id IN (SELECT chat_user_id FROM chat_links WHERE user_id=$1)
+         OR LOWER(u.username)=LOWER($2)
+      ORDER BY u.created_at
+    `, [t.id, t.username]);
+    const chats = chat.rows.map(u => ({
+      username: u.username,
+      online: chatOnline(u.id),
+      lastSeen: brokerIso(u.last_seen),
+      joined: brokerIso(u.created_at)
+    }));
     return {
       casinoUsername: t.username,
       memberSince: brokerIso(t.created_at),
-      chat: u ? {
-        username: u.username,
-        online: chatOnline(u.id),
-        lastSeen: brokerIso(u.last_seen),
-        joined: brokerIso(u.created_at)
-      } : null
+      chats,
+      chat: chats[0] || null
     };
   },
 
@@ -3081,21 +3198,34 @@ const BROKER_BUILDERS = {
   },
 
   async wallet(c, t) {
-    const w = await c.query('SELECT id, name, created_at FROM wallets WHERE LOWER(name)=LOWER($1)', [t.username]);
-    if (!w.rows.length) return { found: false };
-    const wallet = w.rows[0];
-    const assets = walletAssets(await walletHoldings(c, wallet.id))
-      .filter(a => a.qty > 0)
-      .map(a => ({ sym: a.sym, name: a.name, glyph: a.glyph, qty: a.qty, value: a.value }))
-      .sort((a, b) => b.value - a.value);
-    const txs = await c.query('SELECT COUNT(*) AS n FROM wallet_txs WHERE wallet_id=$1', [wallet.id]);
+    // Wallets linked to this casino player, plus a legacy match on the same name.
+    const w = await c.query(`
+      SELECT id, name, created_at FROM wallets
+      WHERE id IN (SELECT wallet_id FROM wallet_links WHERE user_id=$1)
+         OR LOWER(name)=LOWER($2)
+      ORDER BY created_at
+    `, [t.id, t.username]);
+    if (!w.rows.length) return { found: false, wallets: [] };
+
+    const wallets = [];
+    for (const wallet of w.rows) {
+      const assets = walletAssets(await walletHoldings(c, wallet.id))
+        .filter(a => a.qty > 0)
+        .map(a => ({ sym: a.sym, name: a.name, glyph: a.glyph, qty: a.qty, value: a.value }))
+        .sort((a, b) => b.value - a.value);
+      const txs = await c.query('SELECT COUNT(*) AS n FROM wallet_txs WHERE wallet_id=$1', [wallet.id]);
+      wallets.push({
+        walletName: wallet.name,
+        created: brokerIso(wallet.created_at),
+        total: assets.reduce((s, a) => s + a.value, 0),
+        assets,
+        transactions: Number(txs.rows[0].n)
+      });
+    }
     return {
       found: true,
-      walletName: wallet.name,
-      created: brokerIso(wallet.created_at),
-      total: assets.reduce((s, a) => s + a.value, 0),
-      assets,
-      transactions: Number(txs.rows[0].n)
+      wallets,
+      total: wallets.reduce((s, x) => s + x.total, 0)
     };
   }
 };
