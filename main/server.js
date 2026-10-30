@@ -22,7 +22,7 @@ app.use(express.json({ limit: '20kb' }));
 
 const START_BALANCE = 1000;
 // Any name of 1-16 characters (no leading/trailing spaces, no control characters).
-const NAME_RE = /^[^ -]{1,16}$/;
+const NAME_RE = /^[^\u0000-\u001f\u007f]{1,16}$/;
 const validName = n => typeof n === 'string' && n === n.trim() && NAME_RE.test(n);
 const NAME_ERR = 'Username must be 1-16 characters';
 const validPassword = p => typeof p === 'string' && p.length >= 1 && p.length <= 200;
@@ -1890,19 +1890,28 @@ app.post('/api/trade', auth, route(async (req, res) => {
   }
 
   if (side === 'sell') {
-    if (!h || Number(h.qty) <= 0)
-      return fail(res, 'You do not own this coin');
-
     const pct = Number(req.body.percent);
     if (!(pct > 0 && pct <= 100))
       return fail(res, 'Percent must be 1-100');
 
-    const oldQty = Number(h.qty);
-    const oldCost = Number(h.cost);
-    const q = pct === 100 ? oldQty : oldQty * pct / 100;
-    const got = Math.max(0, Math.floor(q * price * (1 - FEE)));
+    let got = 0;
 
     await transaction(async client => {
+      // Lock the holding row so concurrent sells cannot both pay out.
+      const hr = await client.query(`
+        SELECT quantity AS qty, cost_basis AS cost
+        FROM holdings WHERE user_id=$1 AND symbol=$2 FOR UPDATE
+      `, [uid, sym]);
+
+      const hold = hr.rows[0];
+      if (!hold || Number(hold.qty) <= 0)
+        throw shopFail('You do not own this coin');
+
+      const oldQty = Number(hold.qty);
+      const oldCost = Number(hold.cost);
+      const q = pct === 100 ? oldQty : oldQty * pct / 100;
+      got = Math.max(0, Math.floor(q * price * (1 - FEE)));
+
       await client.query(
         'UPDATE users SET balance=balance+$1 WHERE id=$2',
         [got, uid]
