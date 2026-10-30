@@ -184,6 +184,33 @@ td input{width:110px}
 .shop-item .owned-tag{color:var(--g);font-weight:800;font-size:12px;margin-bottom:8px}
 .shop-item.cant .shop-price{color:var(--mut)}
 .shop-empty{grid-column:1/-1;text-align:center;color:var(--mut);padding:40px 10px;border:1px dashed var(--line);border-radius:14px}
+/* Public data broker */
+.brk-results{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 16px}
+.brk-chip{background:#0d1220;color:var(--txt);border:1px solid var(--line);padding:8px 14px;border-radius:99px;cursor:pointer;font-weight:600;font-size:14px;max-width:100%;overflow-wrap:anywhere}
+.brk-chip:hover{border-color:var(--gold)}
+.brk-chip small{color:var(--mut);font-weight:500;margin-left:6px}
+.brk-empty{color:var(--mut);font-size:13px}
+.brk-target{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin:4px 0 14px;padding:14px 16px;background:#0d1220;border:1px solid var(--line);border-radius:14px}
+.brk-target h3{margin:0;font-size:20px;overflow-wrap:anywhere}
+.brk-target small{color:var(--mut)}
+.brk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:20px}
+.brk-card{display:flex;flex-direction:column;background:linear-gradient(180deg,#1a2138,#111628);border:1px solid var(--line);border-radius:14px;padding:16px;min-width:0}
+.brk-card.owned{background:linear-gradient(180deg,#14301f,#0f1a1a);border-color:#235c3a}
+.brk-card h4{margin:0 0 4px;font-size:16px}
+.brk-desc{color:var(--mut);font-size:13px;margin:0 0 12px}
+.brk-redact{display:flex;flex-direction:column;gap:7px;margin:0 0 14px;flex:1}
+.brk-redact i{display:block;height:11px;border-radius:3px;background:#2a3250}
+.brk-body{flex:1;margin-bottom:12px}
+.brk-kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid var(--line);font-size:14px}
+.brk-kv span:first-child{color:var(--mut)}
+.brk-kv span:last-child{font-weight:700;text-align:right;overflow-wrap:anywhere}
+.brk-sub{margin:10px 0 4px;color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:1px}
+.brk-asof{color:var(--mut);font-size:12px;margin:0 0 8px}
+.brk-card .btn{width:100%}
+.brk-card .btn.sell{background:transparent;color:var(--txt);border:1px solid var(--line)}
+.brk-history{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+@media(max-width:640px){.brk-grid{grid-template-columns:1fr}}
+
 /* Telegram-style chat */
 .tg-launcher{position:fixed;left:18px;bottom:18px;z-index:25;width:58px;height:58px;border-radius:50%;border:0;background:linear-gradient(150deg,#52a8f0,#2481cc);color:#fff;cursor:pointer;box-shadow:0 6px 20px #0009;display:flex;align-items:center;justify-content:center;padding:0;transition:transform .15s}
 .tg-launcher:hover{transform:scale(1.07)}
@@ -529,6 +556,31 @@ td input{width:110px}
     </div>
   </section>
 
+  <section id="broker" class="card hide">
+    <div class="shop-head">
+      <div>
+        <h2>🕵️ Public Data Broker</h2>
+        <p>Buy a snapshot report on any player: chat username, balances, trading portfolio, luxury collection and their Exodus wallet.</p>
+      </div>
+      <div class="shop-stats">
+        <div class="shop-stat"><small>Reports you own</small><strong id="brkBought">0</strong></div>
+        <div class="shop-stat"><small>Times your data was sold</small><strong id="brkExposure">0</strong></div>
+      </div>
+    </div>
+    <div class="row">
+      <div style="flex:1;min-width:200px">
+        <label for="brkQ">Search a player</label>
+        <input id="brkQ" style="width:100%" maxlength="16" autocomplete="off" placeholder="Start typing a username…" oninput="brkTyping()" onkeydown="if(event.key==='Enter')brkSearch()">
+      </div>
+      <button class="btn" onclick="brkSearch()">🔎 Search</button>
+    </div>
+    <div class="brk-results" id="brkResults"></div>
+    <div id="brkProfile" class="hide"></div>
+    <div class="brk-sub">Your purchased reports</div>
+    <div class="brk-history" id="brkHistory"></div>
+    <div class="case-note">Virtual coins only. Reports are snapshots taken at purchase time and only use data from this game; passwords, seed phrases and wallet access are never for sale.</div>
+  </section>
+
   <div class="foot">Virtual currency with no cash value. For entertainment only.</div>
 </main>
 <!-- Telegram-style chat -->
@@ -668,6 +720,8 @@ async function logout(){
   if(token)await api('logout',{});
   localStorage.removeItem('token');
   token=null;
+  brk=null;brkTarget=null;
+  $('#brkProfile').classList.add('hide');
   $('#auth').classList.remove('hide');
 }
 
@@ -686,7 +740,8 @@ async function init(){
     ['boxes','🎁 Boxes'],
     ['chicken','🐔 Chicken Road'],
     ['higherlower','🃏 Higher or Lower'],
-    ['shop','🛍️ Shop']
+    ['shop','🛍️ Shop'],
+    ['broker','🕵️ Data Broker']
   ];
   if(d.isAdmin)tabs.push(['admin','🛠 Admin']);
 
@@ -708,6 +763,7 @@ function show(t){
   );
   if(t==='admin'){loadUsers();loadAnnouncement(true);}
   if(t==='shop')loadShop();
+  if(t==='broker')loadBroker();
 }
 
 // Mines
@@ -1213,6 +1269,188 @@ function resume(g){
 
     $('#hlstatus').textContent='Round resumed. Continue guessing or cash out after a correct guess.';
   }
+}
+
+// Public data broker
+let brk=null,brkTarget=null,brkBusy=false,brkTimer=null;
+const brkEl=(tag,cls,text)=>{
+  const e=document.createElement(tag);
+  if(cls)e.className=cls;
+  if(text!==undefined)e.textContent=text;
+  return e;
+};
+const brkDate=iso=>iso?new Date(iso).toLocaleString():'never';
+const brkNum=n=>{n=Number(n)||0;return Math.abs(n)>=1?n.toLocaleString(undefined,{maximumFractionDigits:2}):String(Number(n.toPrecision(4)))};
+const brkQty=n=>String(Number((Number(n)||0).toPrecision(6)));
+
+async function loadBroker(){
+  const d=await api('broker');
+  if(!d)return;
+  brk=d;
+  setBal(d.balance);
+  $('#brkExposure').textContent=fmt(d.exposure);
+  $('#brkBought').textContent=fmt(d.purchased.reduce((s,p)=>s+p.sections,0));
+
+  const hist=$('#brkHistory');
+  hist.replaceChildren();
+  if(!d.purchased.length)hist.append(brkEl('div','brk-empty','Nothing yet. Search a player above to buy your first report.'));
+  for(const p of d.purchased){
+    const b=brkEl('button','brk-chip',p.name);
+    b.append(brkEl('small','',p.sections+'/'+d.sections.length+' sections · '+brkDate(p.last)));
+    b.onclick=()=>brkOpen(p.name);
+    hist.append(b);
+  }
+  if(brkTarget)renderBrkProfile();
+}
+
+function brkTyping(){
+  clearTimeout(brkTimer);
+  brkTimer=setTimeout(brkSearch,300);
+}
+
+async function brkSearch(){
+  clearTimeout(brkTimer);
+  const q=$('#brkQ').value.trim();
+  const box=$('#brkResults');
+  box.replaceChildren();
+  if(!q)return;
+  const d=await api('broker/search?q='+encodeURIComponent(q));
+  if(!d)return;
+  if(q!==$('#brkQ').value.trim())return; // a newer search is already running
+  if(!d.users.length){box.append(brkEl('div','brk-empty','No players found.'));return;}
+  for(const name of d.users){
+    const b=brkEl('button','brk-chip',name);
+    b.onclick=()=>brkOpen(name);
+    box.append(b);
+  }
+}
+
+async function brkOpen(name){
+  const d=await api('broker/profile?name='+encodeURIComponent(name));
+  if(!d)return;
+  setBal(d.balance);
+  brkTarget=d;
+  renderBrkProfile();
+  $('#brkProfile').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+async function brkBuy(sections){
+  if(brkBusy||!brkTarget)return;
+  brkBusy=true;
+  renderBrkProfile();
+  const d=await api('broker/buy',{name:brkTarget.name,sections});
+  brkBusy=false;
+  if(d){
+    setBal(d.balance);
+    brkTarget=d;
+    toast(d.msg+' (−'+fmt(d.paid)+')');
+    loadBroker();
+  }
+  renderBrkProfile();
+}
+
+function brkRows(parent,rows){
+  for(const [k,v] of rows){
+    const r=brkEl('div','brk-kv');
+    r.append(brkEl('span','',k),brkEl('span','',v));
+    parent.append(r);
+  }
+}
+
+function brkSubList(parent,title,rows){
+  if(!rows.length)return;
+  parent.append(brkEl('div','brk-sub',title));
+  brkRows(parent,rows);
+}
+
+function brkRenderData(id,d,body){
+  if(id==='profile'){
+    brkRows(body,[
+      ['Casino username',d.casinoUsername],
+      ['Member since',brkDate(d.memberSince)]
+    ]);
+    if(d.chat)brkRows(body,[
+      ['Royal Chat username','@'+d.chat.username],
+      ['Status',d.chat.online?'🟢 online (at purchase)':'⚪ last seen '+brkDate(d.chat.lastSeen)],
+      ['Chat joined',brkDate(d.chat.joined)]
+    ]);
+    else brkRows(body,[['Royal Chat','No chat account with this name']]);
+  }else if(id==='casino'){
+    brkRows(body,[
+      ['Balance',fmt(d.balance)+' coins'],
+      ['Leaderboard rank','#'+d.rank+' of '+d.players],
+      ['In a game',d.activeGame||'No']
+    ]);
+  }else if(id==='trading'){
+    brkRows(body,[
+      ['Portfolio value','$'+brkNum(d.totalValue)],
+      ['Trades made',fmt(d.trades)],
+      ['Last trade',brkDate(d.lastTrade)],
+      ['Auto-sell orders',fmt(d.autoOrders)]
+    ]);
+    brkSubList(body,'Positions',d.positions.map(p=>[p.emoji+' '+p.name,brkQty(p.qty)+' ≈ $'+brkNum(p.value)]));
+  }else if(id==='luxury'){
+    brkRows(body,[
+      ['Items owned',fmt(d.count)],
+      ['Total spent',fmt(d.totalPaid)+' coins']
+    ]);
+    brkSubList(body,d.count>d.items.length?'Most expensive items':'Items',d.items.map(i=>[i.emoji+' '+i.name,fmt(i.paid)]));
+  }else if(id==='wallet'){
+    if(!d.found){brkRows(body,[['Exodus wallet','No wallet found under this name']]);return;}
+    brkRows(body,[
+      ['Wallet name',d.walletName],
+      ['Total balance','$'+brkNum(d.total)],
+      ['Transactions',fmt(d.transactions)],
+      ['Created',brkDate(d.created)]
+    ]);
+    brkSubList(body,'Assets',d.assets.map(a=>[a.glyph+' '+a.name,brkQty(a.qty)+' ≈ $'+brkNum(a.value)]));
+  }
+}
+
+function renderBrkProfile(){
+  const box=$('#brkProfile');
+  const t=brkTarget;
+  box.replaceChildren();
+  if(!t||!brk){box.classList.add('hide');return;}
+  box.classList.remove('hide');
+  const bal=me?me.balance:0;
+
+  const head=brkEl('div','brk-target');
+  const left=brkEl('div');
+  left.append(brkEl('h3','','🔍 '+t.name),brkEl('small','','Public record · data is a snapshot from the moment you buy it'));
+  const allOwned=t.sections.every(s=>s.owned);
+  const bundle=brk.bundlePrice;
+  const full=brkEl('button','btn',(allOwned?'🔄 Refresh full dossier · ':'🗂 Full dossier · ')+fmt(bundle)+' (−'+Math.round(brk.bundleDiscount*100)+'%)');
+  full.disabled=brkBusy||bal<bundle;
+  full.onclick=()=>brkBuy('all');
+  head.append(left,full);
+  box.append(head);
+
+  const grid=brkEl('div','brk-grid');
+  for(const s of t.sections){
+    const card=brkEl('div','brk-card'+(s.owned?' owned':''));
+    card.append(brkEl('h4','',s.emoji+' '+s.name),brkEl('p','brk-desc',s.desc));
+    if(s.owned){
+      card.append(brkEl('div','brk-asof','Snapshot from '+brkDate(s.purchasedAt)));
+      const body=brkEl('div','brk-body');
+      brkRenderData(s.id,s.data,body);
+      card.append(body);
+      const b=brkEl('button','btn sell','🔄 Refresh · '+fmt(s.price));
+      b.disabled=brkBusy||bal<s.price;
+      b.onclick=()=>brkBuy([s.id]);
+      card.append(b);
+    }else{
+      const red=brkEl('div','brk-redact');
+      for(const w of [90,65,80,50])red.append(Object.assign(brkEl('i'),{style:'width:'+w+'%'}));
+      card.append(red);
+      const b=brkEl('button','btn','🔓 Buy · '+fmt(s.price));
+      b.disabled=brkBusy||bal<s.price;
+      b.onclick=()=>brkBuy([s.id]);
+      card.append(b);
+    }
+    grid.append(card);
+  }
+  box.append(grid);
 }
 
 // Luxury shop
