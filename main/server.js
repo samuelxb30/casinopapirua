@@ -198,13 +198,67 @@ const SHOP_CATEGORIES = [
 ];
 
 const SHOP_ITEMS = [
+  { id: 'w09', category: 'watches', emoji: '⌚', tier: 'common', price: 1500, name: "Casio G-Shock DW-5600", desc: "The square, shock-resistant icon that has survived decades of abuse." },
   { id: 'w01', category: 'watches', emoji: '⌚', tier: 'common',    price: 2500,      name: "Casio F-91W",                          desc: "The iconic digital classic. Alarm, stopwatch, and nearly indestructible." },
+  { id: 'w10', category: 'watches', emoji: '🔋', tier: 'common', price: 3500, name: "Citizen Eco-Drive Promaster", desc: "Solar-powered tool watch that never needs a battery change." },
+  { id: 'w11', category: 'watches', emoji: '🕐', tier: 'common', price: 4500, name: "Timex Weekender", desc: "A simple, friendly field watch that goes with everything." },
+  { id: 'w12', category: 'watches', emoji: '🏔️', tier: 'common', price: 6500, name: "Tissot PRX", desc: "A retro integrated-bracelet design at a very friendly price." },
+  { id: 'w13', category: 'watches', emoji: '🧭', tier: 'common', price: 7500, name: "Hamilton Khaki Field", desc: "A military-heritage field watch with a clean dial." },
+  { id: 'w14', category: 'watches', emoji: '🌴', tier: 'common', price: 8500, name: "Seiko 5 Sports", desc: "A reliable automatic with a colorful dial and a loyal fan base." },
   { id: 'w02', category: 'watches', emoji: '⏱️', tier: 'common',    price: 12000,     name: "Seiko Prospex Diver",                  desc: "Serious dive watch with a rotating bezel and a reputation for toughness." },
+  { id: 'w15', category: 'watches', emoji: '🚀', tier: 'common', price: 16000, name: "Bulova Lunar Pilot", desc: "The chronograph worn on the Moon in 1971, reissued." },
+  { id: 'w16', category: 'watches', emoji: '🛩️', tier: 'common', price: 17500, name: "Longines Spirit", desc: "Aviation heritage and a sapphire crystal in a classic case." },
+  { id: 'w17', category: 'watches', emoji: '⏲️', tier: 'common', price: 19000, name: "Oris Aquis Date", desc: "A Swiss dive watch with a distinctive bezel and a great value." },
+  { id: 'w18', category: 'watches', emoji: '🌲', tier: 'uncommon', price: 21000, name: "Tudor Black Bay 58", desc: "A vintage-styled diver with an in-house movement." },
+  { id: 'w19', category: 'watches', emoji: '🏎️', tier: 'uncommon', price: 23000, name: "TAG Heuer Carrera", desc: "A racing chronograph with a sporty history." },
+  { id: 'w20', category: 'watches', emoji: '🪖', tier: 'uncommon', price: 24000, name: "Breitling Navitimer", desc: "The pilot's watch with a slide-rule bezel." },
+  { id: 'w21', category: 'watches', emoji: '🎯', tier: 'uncommon', price: 28000, name: "Grand Seiko Snowflake", desc: "Hand-finished Japanese watchmaking with a snow-textured dial." },
+  { id: 'w22', category: 'watches', emoji: '🕰️', tier: 'uncommon', price: 31000, name: "Rolex Oyster Perpetual 36", desc: "The simplest Rolex, with a color-pop dial and a legendary reputation." },
+  { id: 'w23', category: 'watches', emoji: '🌊', tier: 'uncommon', price: 34000, name: "Omega Seamaster 300M", desc: "The James Bond-era diver with a wave-pattern dial." },
+  { id: 'w24', category: 'watches', emoji: '🧊', tier: 'uncommon', price: 38000, name: "IWC Pilot Mark XX", desc: "A classic pilot watch with clean lines and a big crown." },
+  { id: 'w25', category: 'watches', emoji: '🔬', tier: 'uncommon', price: 42000, name: "Panerai Luminor Marina", desc: "Cushion case, sandwich dial and an Italian navy heritage." },
   { id: 'w03', category: 'watches', emoji: '🌙', tier: 'uncommon',  price: 45000,     name: "Omega Speedmaster Professional",       desc: "The Moonwatch. Worn on NASA missions, loved by collectors." },
+  { id: 'w26', category: 'watches', emoji: '🌙', tier: 'uncommon', price: 55000, name: "Rolex Air-King", desc: "A pilot-inspired Rolex with a bold 3-6-9 dial." },
+  { id: 'w27', category: 'watches', emoji: '🛡️', tier: 'uncommon', price: 62000, name: "Cartier Tank Must", desc: "A rectangular classic that has been worn by icons for a century." },
+  { id: 'w28', category: 'watches', emoji: '💠', tier: 'uncommon', price: 70000, name: "Rolex Datejust 36", desc: "The jewel of the Oyster range, with a cyclops lens and a fluted bezel." },
+  { id: 'w29', category: 'watches', emoji: '🌐', tier: 'rare', price: 78000, name: "Rolex Explorer I", desc: "Built for Everest. Clean, tough and instantly recognizable." },
+  { id: 'w30', category: 'watches', emoji: '⚫', tier: 'rare', price: 85000, name: "Rolex Milgauss", desc: "A lightning-bolt seconds hand and a green sapphire crystal." },
+  { id: 'w31', category: 'watches', emoji: '🔵', tier: 'rare', price: 95000, name: "Rolex Submariner (No Date)", desc: "The purist's diver with a clean dial and no cyclops." },
+  { id: 'w32', category: 'watches', emoji: '🟢', tier: 'rare', price: 110000, name: "Rolex Submariner Date Hulk", desc: "Green dial, green bezel, and a cult following." },
+  { id: 'w33', category: 'watches', emoji: '🍒', tier: 'rare', price: 115000, name: "Rolex GMT-Master II Pepsi", desc: "Red and blue bezel for tracking two time zones." },
+  { id: 'w34', category: 'watches', emoji: '🥃', tier: 'rare', price: 120000, name: "Rolex GMT-Master II Root Beer", desc: "Brown and gold, with a vintage-inspired look." },
+  { id: 'w35', category: 'watches', emoji: '🥷', tier: 'rare', price: 125000, name: "Rolex Submariner Date Black", desc: "The classic black dial and bezel that everyone recognizes." },
+  { id: 'w36', category: 'watches', emoji: '🌃', tier: 'rare', price: 130000, name: "Rolex Daytona Steel", desc: "The racing chronograph that collectors queue for." },
+  { id: 'w37', category: 'watches', emoji: '🟡', tier: 'rare', price: 140000, name: "Rolex Submariner Date Two-Tone", desc: "Steel and yellow gold with a blue dial for a bit of sparkle." },
   { id: 'w04', category: 'watches', emoji: '🕰️', tier: 'rare',      price: 150000,    name: "Rolex Submariner Date",                desc: "The most recognizable dive watch on earth. Steel, ceramic bezel, instant status." },
+  { id: 'w38', category: 'watches', emoji: '🔱', tier: 'rare', price: 150000, name: "Rolex Sea-Dweller", desc: "A deep-sea diver with a helium escape valve." },
+  { id: 'w39', category: 'watches', emoji: '🗽', tier: 'rare', price: 160000, name: "Rolex Sky-Dweller", desc: "An annual calendar and a second time zone in one case." },
+  { id: 'w40', category: 'watches', emoji: '⛵', tier: 'rare', price: 170000, name: "Rolex Yacht-Master 42", desc: "The sailor's Rolex with a rotatable bezel." },
+  { id: 'w41', category: 'watches', emoji: '🏆', tier: 'rare', price: 180000, name: "Omega Speedmaster Moonwatch Sapphire", desc: "The Moon watch with a transparent back to see the movement." },
+  { id: 'w42', category: 'watches', emoji: '🎖️', tier: 'rare', price: 195000, name: "Rolex Day-Date 40 Yellow Gold", desc: "The President. Day and date in full, wrapped in solid gold." },
+  { id: 'w43', category: 'watches', emoji: '🌅', tier: 'rare', price: 210000, name: "Vacheron Constantin Overseas", desc: "Luxury sports watch with an interchangeable strap system." },
+  { id: 'w44', category: 'watches', emoji: '🚢', tier: 'rare', price: 225000, name: "Rolex Deepsea D-Blue", desc: "Rated to 3,900 meters. A diver for the Mariana Trench." },
+  { id: 'w45', category: 'watches', emoji: '💎', tier: 'rare', price: 245000, name: "Jaeger-LeCoultre Reverso", desc: "The flip watch built for polo players, a design classic." },
+  { id: 'w46', category: 'watches', emoji: '🏁', tier: 'rare', price: 260000, name: "Rolex Daytona Yellow Gold", desc: "18K yellow gold on an Oysterflex strap with a racing pedigree." },
+  { id: 'w47', category: 'watches', emoji: '🌈', tier: 'epic', price: 320000, name: "Rolex Daytona Rainbow", desc: "Baguette sapphires in every color around a gold case." },
+  { id: 'w48', category: 'watches', emoji: '🐍', tier: 'epic', price: 380000, name: "Hublot Big Bang Unico", desc: "A bold, fused-material chronograph with a modern look." },
+  { id: 'w49', category: 'watches', emoji: '🥇', tier: 'epic', price: 450000, name: "Rolex Submariner Gold & Diamonds", desc: "A solid gold diver set with diamonds." },
+  { id: 'w50', category: 'watches', emoji: '🔷', tier: 'epic', price: 520000, name: "A. Lange & Söhne Lange 1", desc: "German watchmaking with an outsize date and a three-quarter plate." },
   { id: 'w05', category: 'watches', emoji: '⚙️', tier: 'epic',      price: 600000,    name: "Audemars Piguet Royal Oak",            desc: "Octagonal bezel, integrated bracelet, and a design that changed watchmaking." },
+  { id: 'w51', category: 'watches', emoji: '🕊️', tier: 'epic', price: 680000, name: "Audemars Piguet Royal Oak Offshore", desc: "The beefier, bolder Royal Oak." },
+  { id: 'w52', category: 'watches', emoji: '🏛️', tier: 'epic', price: 850000, name: "Patek Philippe Aquanaut", desc: "A rounded octagon with a rubber-style strap." },
+  { id: 'w53', category: 'watches', emoji: '🌌', tier: 'epic', price: 1200000, name: "Patek Philippe Nautilus 5711 Tiffany Blue", desc: "A rare Tiffany-blue dial made in a tiny number." },
+  { id: 'w54', category: 'watches', emoji: '🏁', tier: 'epic', price: 1500000, name: "Rolex Daytona Paul Newman", desc: "The vintage exotic-dial chronograph that changed auctions." },
+  { id: 'w55', category: 'watches', emoji: '💫', tier: 'epic', price: 1800000, name: "Audemars Piguet Royal Oak Jumbo Extra-Thin", desc: "The original steel luxury sports watch in its purest form." },
+  { id: 'w56', category: 'watches', emoji: '🎭', tier: 'epic', price: 2100000, name: "Patek Philippe Grand Complications 5270", desc: "A perpetual calendar chronograph in a classic case." },
   { id: 'w06', category: 'watches', emoji: '🌊', tier: 'epic',      price: 2400000,   name: "Patek Philippe Nautilus 5711",         desc: "Famously hard to get. Collectors queue for years." },
+  { id: 'w57', category: 'watches', emoji: '🕴️', tier: 'legendary', price: 3200000, name: "Richard Mille RM 011", desc: "A flyback chronograph with a barrel-shaped tonneau case." },
+  { id: 'w58', category: 'watches', emoji: '🔶', tier: 'legendary', price: 4500000, name: "Patek Philippe 5016A Skeleton Tourbillon", desc: "A tourbillon with a skeleton dial, built in steel." },
+  { id: 'w59', category: 'watches', emoji: '🥶', tier: 'legendary', price: 6500000, name: "Rolex Daytona Ref. 6265 Vintage", desc: "A prized 1970s hand-wound Daytona that collectors hunt for." },
   { id: 'w07', category: 'watches', emoji: '💎', tier: 'legendary', price: 9500000,   name: "Richard Mille RM 056 Sapphire",        desc: "Case carved from a block of sapphire crystal. Wearable art that costs a fortune." },
+  { id: 'w60', category: 'watches', emoji: '🪙', tier: 'legendary', price: 14000000, name: "Patek Philippe Grandmaster Chime", desc: "A watch with 20 complications and a reversible case." },
+  { id: 'w61', category: 'watches', emoji: '🎓', tier: 'legendary', price: 17800000, name: "Paul Newman's Own Rolex Daytona", desc: "The actual watch gifted to the actor. A record-setting auction sale in 2017." },
+  { id: 'w62', category: 'watches', emoji: '👑', tier: 'legendary', price: 30000000, name: "Breguet Marie-Antoinette Grande Complication", desc: "A legendary commission with a mythic history." },
   { id: 'w08', category: 'watches', emoji: '👑', tier: 'legendary', price: 40000000,  name: "Patek Philippe Henry Graves Supercomplication", desc: "The legendary 1932 pocket watch with 24 complications. Auction record holder in its day." },
   { id: 'c01', category: 'cars', emoji: '🚗', tier: 'common',    price: 18000,      name: "Honda Civic",                      desc: "Reliable, efficient and surprisingly fun to drive." },
   { id: 'c13', category: 'cars', emoji: '🚙', tier: 'common', price: 22000, name: "Toyota Corolla", desc: "The world's best-selling nameplate. Cheap to run and almost impossible to kill." },
@@ -521,6 +575,9 @@ async function initDatabase() {
   await pool.query(`
     ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMPTZ
   `);
+  await pool.query(`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS last_seen TIMESTAMPTZ
+  `);
 
   // ----- Account links (casino user <-> chat account / wallet) -----
   await pool.query(`
@@ -672,6 +729,33 @@ async function linkChatAccount(req, chatId) {
   }
 }
 
+// ---------- Player activity (online status) ----------
+const ONLINE_MS = 2 * 60 * 1000;
+const lastActive = new Map();   // user id -> last request time (ms)
+const lastSeenWrite = new Map(); // user id -> last time we saved it to the database
+
+function touchActive(uid) {
+  const key = String(uid);
+  const now = Date.now();
+  lastActive.set(key, now);
+  if (now - (lastSeenWrite.get(key) || 0) > 60000) {
+    lastSeenWrite.set(key, now);
+    pool.query('UPDATE users SET last_seen=NOW() WHERE id=$1', [uid])
+      .catch(err => console.error('last_seen update error:', err));
+  }
+}
+
+const isOnline = uid => {
+  const t = lastActive.get(String(uid));
+  return !!t && Date.now() - t < ONLINE_MS;
+};
+
+setInterval(() => {
+  const cutoff = Date.now() - ONLINE_MS * 5;
+  for (const [k, t] of lastActive) if (t < cutoff) lastActive.delete(k);
+  for (const [k, t] of lastSeenWrite) if (t < cutoff) lastSeenWrite.delete(k);
+}, 5 * 60 * 1000).unref();
+
 const auth = route(async (req, res, next) => {
   const token = req.headers.authorization || '';
   if (!token || token.length > 200) return fail(res, 'Please log in', 401);
@@ -687,6 +771,7 @@ const auth = route(async (req, res, next) => {
   if (result.rows[0].banned) return fail(res, 'This account is suspended', 403);
 
   req.user = result.rows[0];
+  touchActive(req.user.id);
   next();
 });
 
@@ -880,6 +965,7 @@ app.get('/api/me', auth, route(async (req, res) => {
 }));
 
 app.post('/api/logout', auth, route(async (req, res) => {
+  lastActive.delete(String(req.user.id));
   await pool.query(
     'DELETE FROM sessions WHERE token=$1',
     [req.headers.authorization]
@@ -3385,6 +3471,45 @@ app.post('/api/broker/buy', auth, route(async (req, res) => {
     paid: total,
     msg: `Report on ${target.username} purchased`,
     ...(await brokerView(uid, target))
+  });
+}));
+
+// ---------- Public player list ----------
+
+app.post('/api/ping', auth, (req, res) => res.json({ ok: true }));
+
+app.get('/api/players', auth, route(async (req, res) => {
+  const r = await pool.query(`
+    SELECT id, username, is_admin, created_at, last_seen, last_login
+    FROM users WHERE NOT banned
+    ORDER BY id LIMIT 2000
+  `);
+
+  const players = r.rows.map(u => {
+    const online = isOnline(u.id);
+    const seen = u.last_seen || u.last_login || null;
+    return {
+      name: u.username,
+      role: u.is_admin ? 'admin' : 'player',
+      online,
+      lastSeen: online ? new Date().toISOString() : (seen ? new Date(seen).toISOString() : null),
+      memberSince: new Date(u.created_at).toISOString(),
+      you: String(u.id) === String(req.user.id)
+    };
+  });
+
+  // Online players first (admins first among them), then everyone else by most recent activity.
+  players.sort((a, b) =>
+    (b.online - a.online) ||
+    ((b.role === 'admin') - (a.role === 'admin')) ||
+    (new Date(b.lastSeen || 0) - new Date(a.lastSeen || 0)) ||
+    a.name.localeCompare(b.name)
+  );
+
+  res.json({
+    online: players.filter(p => p.online).length,
+    total: players.length,
+    players
   });
 }));
 

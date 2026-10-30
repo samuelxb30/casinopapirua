@@ -143,6 +143,18 @@ td input{width:110px}
 .admin-tag.bad{color:var(--r);border-color:#6d3038}
 .admin-tag.ok{color:#7bc862;border-color:#355a2c}
 .admin-muted{color:var(--mut);font-size:12px}
+/* Player list */
+.pl-head{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.pl-head h2{margin:0;font-size:26px}
+.pl-list{display:grid;gap:8px}
+.pl-row{display:flex;align-items:center;gap:12px;background:#0d1220;border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.pl-dot{width:10px;height:10px;border-radius:50%;background:#4b5368;flex:0 0 auto}
+.pl-dot.on{background:#43d17a;box-shadow:0 0 8px #43d17a99}
+.pl-name{font-weight:800}
+.pl-meta{margin-left:auto;text-align:right;color:var(--mut);font-size:12px}
+.pl-role{font-size:11px;font-weight:900;letter-spacing:.5px;padding:2px 8px;border-radius:99px;margin-left:8px;color:var(--gold);border:1px solid #6b5a2a;background:#2a2412}
+.pl-you{font-size:11px;color:var(--mut);margin-left:6px}
+.pl-sep{color:var(--mut);font-size:12px;font-weight:800;letter-spacing:1px;margin:10px 2px 0}
 /* Live announcement ticker */
 .announcement-bar{display:flex;align-items:center;gap:12px;overflow:hidden;background:linear-gradient(90deg,#171d31,#22213a,#171d31);border-bottom:1px solid #4b4261;padding:10px 0;min-height:44px}
 .announcement-label{flex:0 0 auto;margin-left:20px;color:var(--gold);font-size:11px;font-weight:900;letter-spacing:1.5px}
@@ -602,6 +614,17 @@ td input{width:110px}
     </div>
   </section>
 
+  <section id="players" class="card hide">
+    <div class="pl-head">
+      <div>
+        <h2>👥 Players</h2>
+        <p class="admin-info" style="margin:4px 0 0">Everyone on Royal Paper Casino. Online players are listed first.</p>
+      </div>
+      <div class="admin-stat"><small>Online now</small><strong id="plOnline">0</strong> <span class="admin-muted">of <span id="plTotal">0</span></span></div>
+    </div>
+    <div class="pl-list" id="plList"></div>
+  </section>
+
   <section id="broker" class="card hide">
     <div class="shop-head">
       <div>
@@ -787,6 +810,7 @@ async function init(){
     ['chicken','🐔 Chicken Road'],
     ['higherlower','🃏 Higher or Lower'],
     ['shop','🛍️ Shop'],
+    ['players','👥 Players'],
     ['broker','🕵️ Data Broker']
   ];
   if(d.isAdmin)tabs.push(['admin','🛠 Admin']);
@@ -810,6 +834,7 @@ function show(t){
   if(t==='admin'){loadUsers();loadAdminOverview();loadAnnouncement(true);}
   if(t==='shop')loadShop();
   if(t==='broker')loadBroker();
+  if(t==='players')loadPlayers();
 }
 
 // Mines
@@ -2469,6 +2494,36 @@ async function adj(id,mode){
     setBal(current.balance);
     $('#who').textContent=current.username+(current.isAdmin?' · admin':'');
   }
+}
+
+// ---- Player list & online heartbeat ----
+async function loadPlayers(){
+  const d=await api('players');
+  if(!d)return;
+  $('#plOnline').textContent=fmt(d.online);
+  $('#plTotal').textContent=fmt(d.total);
+  const box=$('#plList');
+  box.replaceChildren();
+  let sepDone=false;
+  for(const p of d.players){
+    if(!p.online&&!sepDone&&d.online>0){
+      box.append(brkEl('div','pl-sep','OFFLINE'));
+      sepDone=true;
+    }
+    const row=brkEl('div','pl-row');
+    row.append(brkEl('span','pl-dot'+(p.online?' on':'')));
+    const name=brkEl('span','pl-name',p.name);
+    if(p.role==='admin')name.append(brkEl('span','pl-role','👑 ADMIN'));
+    if(p.you)name.append(brkEl('span','pl-you','(you)'));
+    row.append(name);
+    row.append(brkEl('span','pl-meta',(p.online?'Online now':'Last seen '+(p.lastSeen?brkDate(p.lastSeen):'never'))+' · Joined '+new Date(p.memberSince).toLocaleDateString()));
+    box.append(row);
+  }
+}
+if(!window.__plTimers){
+  window.__plTimers=true;
+  setInterval(()=>{if(token&&!document.hidden)api('ping',{});},45000);
+  setInterval(()=>{const s=$('#players');if(token&&s&&!s.classList.contains('hide')&&!document.hidden)loadPlayers();},20000);
 }
 
 // ---- Extra admin tools ----
