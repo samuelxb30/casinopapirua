@@ -459,6 +459,9 @@ async function initDatabase() {
     CREATE UNIQUE INDEX IF NOT EXISTS wallets_name_lower_idx ON wallets (LOWER(name))
   `);
   await pool.query(`
+    ALTER TABLE wallets ADD COLUMN IF NOT EXISTS seed_words TEXT
+  `);
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS wallet_sessions (
       token TEXT PRIMARY KEY,
       wallet_id BIGINT NOT NULL REFERENCES wallets(id) ON DELETE CASCADE,
@@ -510,6 +513,13 @@ async function initDatabase() {
   `);
   await pool.query(`
     CREATE INDEX IF NOT EXISTS broker_reports_target_idx ON broker_reports(target_id)
+  `);
+
+  await pool.query(`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS banned BOOLEAN NOT NULL DEFAULT FALSE
+  `);
+  await pool.query(`
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMPTZ
   `);
 
   // ----- Account links (casino user <-> chat account / wallet) -----
@@ -620,6 +630,7 @@ async function newSession(uid) {
     'INSERT INTO sessions(token,user_id) VALUES($1,$2)',
     [token, uid]
   );
+  await pool.query('UPDATE users SET last_login=NOW() WHERE id=$1', [uid]);
   return token;
 }
 
@@ -673,6 +684,7 @@ const auth = route(async (req, res, next) => {
   `, [token]);
 
   if (!result.rows.length) return fail(res, 'Please log in', 401);
+  if (result.rows[0].banned) return fail(res, 'This account is suspended', 403);
 
   req.user = result.rows[0];
   next();
@@ -817,6 +829,8 @@ app.post('/api/login', route(async (req, res) => {
   if (a.length !== b.length || !crypto.timingSafeEqual(a, b))
     return fail(res, 'Wrong username or password', 401);
 
+  if (u.banned) return fail(res, 'This account is suspended', 403);
+
   res.json({ token: await newSession(u.id) });
 }));
 
@@ -857,6 +871,7 @@ app.get('/api/me', auth, route(async (req, res) => {
   }
 
   res.json({
+    id: Number(u.id),
     username: u.username,
     balance: await getBal(u.id),
     isAdmin: !!u.is_admin,
@@ -904,15 +919,26 @@ app.post('/api/admin/announcement', auth, admin, route(async (req, res) => {
 
 app.get('/api/admin/users', auth, admin, route(async (req, res) => {
   const r = await pool.query(`
-    SELECT id,username,balance,is_admin,created_at
-    FROM users ORDER BY id
+    SELECT u.id, u.username, u.balance, u.is_admin, u.banned,
+           u.created_at, u.last_login,
+           (SELECT COUNT(*) FROM chat_links l WHERE l.user_id=u.id) AS chats,
+           (SELECT COUNT(*) FROM wallet_links l WHERE l.user_id=u.id) AS wallets,
+           (SELECT COUNT(*) FROM games g WHERE g.user_id=u.id) AS in_game
+    FROM users u ORDER BY u.id
   `);
 
   res.json(r.rows.map(u => ({
-    ...u,
+    id: u.id,
+    username: u.username,
     balance: Number(u.balance),
     is_admin: !!u.is_admin,
-    created: u.created_at
+    banned: !!u.banned,
+    created: u.created_at,
+    created_at: u.created_at,
+    last_login: u.last_login,
+    chats: Number(u.chats),
+    wallets: Number(u.wallets),
+    in_game: Number(u.in_game) > 0
   })));
 }));
 
@@ -2750,8 +2776,8 @@ app.post('/api/wallet/create', auth, route(async (req, res) => {
 
     try {
       const r = await pool.query(
-        'INSERT INTO wallets(name,password_hash,seed_hash) VALUES($1,$2,$3) RETURNING id',
-        [name, passwordHash, seedHash(seed)]
+        'INSERT INTO wallets(name,password_hash,seed_hash,seed_words) VALUES($1,$2,$3,$4) RETURNING id',
+        [name, passwordHash, seedHash(seed), seed.join(' ')]
       );
       const token = await walletNewSession(r.rows[0].id, req.user.id);
       return res.json({ token, name, seed });
@@ -3360,6 +3386,287 @@ app.post('/api/broker/buy', auth, route(async (req, res) => {
     msg: `Report on ${target.username} purchased`,
     ...(await brokerView(uid, target))
   });
+}));
+
+// ---------- Extra admin tools ----------
+// Passwords and wallet seed phrases are stored only as one-way hashes, so they
+// cannot be viewed. Admins can instead reset them to a new value.
+
+const adminIdOk = v => /^[1-9]\d{0,18}$/.test(String(v ?? ''));
+
+async function adminTarget(req, { allowSelf = true, allowAdmin = false } = {}) {
+  const id = (req.body || {}).id ?? req.query.id;
+  if (!adminIdOk(id)) throw shopFail('Invalid account ID');
+  const r = await pool.query(
+    'SELECT id, username, is_admin, balance, created_at, last_login, banned FROM users WHERE id=$1',
+    [String(id)]
+  );
+  const t = r.rows[0];
+  if (!t) throw shopFail('User not found', 404);
+  const self = String(t.id) === String(req.user.id);
+  if (self && !allowSelf) throw shopFail('You cannot do this to your own account');
+  if (t.is_admin && !self && !allowAdmin)
+    throw shopFail('You cannot do this to another admin', 403);
+  return t;
+}
+
+app.get('/api/admin/overview', auth, admin, route(async (req, res) => {
+  const q = async sql => Number((await pool.query(sql)).rows[0].n);
+  const [users, admins, banned, bal, games, trades, items, chatUsers, msgs,
+         wallets, reports] = await Promise.all([
+    q('SELECT COUNT(*) AS n FROM users'),
+    q('SELECT COUNT(*) AS n FROM users WHERE is_admin'),
+    q('SELECT COUNT(*) AS n FROM users WHERE banned'),
+    q('SELECT COALESCE(SUM(balance),0) AS n FROM users'),
+    q('SELECT COUNT(*) AS n FROM games'),
+    q('SELECT COUNT(*) AS n FROM trades'),
+    q('SELECT COUNT(*) AS n FROM shop_purchases'),
+    q('SELECT COUNT(*) AS n FROM chat_users'),
+    q('SELECT COUNT(*) AS n FROM chat_messages'),
+    q('SELECT COUNT(*) AS n FROM wallets'),
+    q('SELECT COALESCE(SUM(buys),0) AS n FROM broker_reports')
+  ]);
+  const online = [...chatClients.values()].filter(set => set.size).length;
+  const active24h = await q(
+    "SELECT COUNT(*) AS n FROM users WHERE last_login > NOW() - INTERVAL '24 hours'"
+  );
+  res.json({
+    users, admins, banned, totalBalance: bal, activeGames: games,
+    trades, shopItems: items, chatUsers, chatMessages: msgs,
+    chatOnline: online, wallets, brokerSales: reports, active24h
+  });
+}));
+
+app.get('/api/admin/user-detail', auth, admin, route(async (req, res) => {
+  const t = await adminTarget(req, { allowAdmin: true });
+  const sessions = Number((await pool.query(
+    'SELECT COUNT(*) AS n FROM sessions WHERE user_id=$1', [t.id]
+  )).rows[0].n);
+  const bought = await pool.query(
+    'SELECT COALESCE(SUM(buys),0) AS n FROM broker_reports WHERE buyer_id=$1', [t.id]
+  );
+  const sold = await pool.query(
+    'SELECT COALESCE(SUM(buys),0) AS n FROM broker_reports WHERE target_id=$1', [t.id]
+  );
+  res.json({
+    user: {
+      id: t.id, username: t.username, is_admin: !!t.is_admin, banned: !!t.banned,
+      created: t.created_at, last_login: t.last_login
+    },
+    sessions,
+    reportsBought: Number(bought.rows[0].n),
+    reportsAbout: Number(sold.rows[0].n),
+    casino: await BROKER_BUILDERS.casino(pool, t),
+    trading: await BROKER_BUILDERS.trading(pool, t),
+    luxury: await BROKER_BUILDERS.luxury(pool, t),
+    chat: await BROKER_BUILDERS.profile(pool, t),
+    wallet: await BROKER_BUILDERS.wallet(pool, t)
+  });
+}));
+
+app.post('/api/admin/reset-password', auth, admin, route(async (req, res) => {
+  const t = await adminTarget(req);
+  const { password } = req.body || {};
+  if (!validPassword(password)) return fail(res, PASS_ERR);
+
+  const salt = crypto.randomBytes(16).toString('hex');
+  await pool.query(
+    'UPDATE users SET password_hash=$1 WHERE id=$2',
+    [`${salt}:${hashPw(password, salt)}`, t.id]
+  );
+  if (String(t.id) !== String(req.user.id))
+    await pool.query('DELETE FROM sessions WHERE user_id=$1', [t.id]);
+
+  res.json({ success: true });
+}));
+
+app.post('/api/admin/logout-user', auth, admin, route(async (req, res) => {
+  const t = await adminTarget(req, { allowSelf: false });
+  await pool.query('DELETE FROM sessions WHERE user_id=$1', [t.id]);
+  res.json({ success: true });
+}));
+
+app.post('/api/admin/ban', auth, admin, route(async (req, res) => {
+  const t = await adminTarget(req, { allowSelf: false });
+  const banned = !!(req.body || {}).banned;
+  await pool.query('UPDATE users SET banned=$1 WHERE id=$2', [banned, t.id]);
+  if (banned) await pool.query('DELETE FROM sessions WHERE user_id=$1', [t.id]);
+  res.json({ success: true, banned });
+}));
+
+app.post('/api/admin/set-admin', auth, admin, route(async (req, res) => {
+  const t = await adminTarget(req, { allowSelf: false, allowAdmin: true });
+  const makeAdmin = !!(req.body || {}).isAdmin;
+
+  if (!makeAdmin && t.is_admin) {
+    // Only the first (oldest) admin can remove admin rights.
+    const first = await pool.query('SELECT MIN(id) AS m FROM users WHERE is_admin');
+    if (String(first.rows[0].m) !== String(req.user.id))
+      return fail(res, 'Only the first admin can remove admin rights', 403);
+  }
+
+  await pool.query('UPDATE users SET is_admin=$1 WHERE id=$2', [makeAdmin, t.id]);
+  res.json({ success: true, is_admin: makeAdmin });
+}));
+
+app.post('/api/admin/clear-game', auth, admin, route(async (req, res) => {
+  const t = await adminTarget(req, { allowAdmin: true });
+  const refund = !!(req.body || {}).refund;
+  let refunded = 0;
+
+  await transaction(async client => {
+    const g = await client.query(
+      'DELETE FROM games WHERE user_id=$1 RETURNING bet', [t.id]
+    );
+    if (!g.rows.length) throw shopFail('This player has no active game');
+    if (refund) {
+      refunded = Number(g.rows[0].bet);
+      await client.query(
+        'UPDATE users SET balance=balance+$1 WHERE id=$2', [refunded, t.id]
+      );
+    }
+  });
+
+  res.json({ success: true, refunded });
+}));
+
+app.post('/api/admin/balance-all', auth, admin, route(async (req, res) => {
+  const n = Number((req.body || {}).amount);
+  if (!Number.isSafeInteger(n) || n < 1 || n > 1e9)
+    return fail(res, 'Enter a whole number from 1 to 1,000,000,000');
+
+  const r = await pool.query(
+    'UPDATE users SET balance=balance+$1 WHERE NOT banned', [n]
+  );
+  res.json({ success: true, users: r.rowCount });
+}));
+
+// ----- Wallets -----
+
+app.get('/api/admin/wallets', auth, admin, route(async (req, res) => {
+  const w = await pool.query(`
+    SELECT w.id, w.name, w.created_at,
+           (SELECT COUNT(*) FROM wallet_txs t WHERE t.wallet_id=w.id) AS txs,
+           (SELECT string_agg(u.username, ', ' ORDER BY u.username)
+              FROM wallet_links l JOIN users u ON u.id=l.user_id
+              WHERE l.wallet_id=w.id) AS owners
+    FROM wallets w ORDER BY w.id
+  `);
+  const h = await pool.query('SELECT wallet_id, symbol, quantity FROM wallet_holdings');
+  const totals = new Map();
+  for (const x of h.rows) {
+    const coin = WCOINS[x.symbol];
+    if (!coin) continue;
+    const key = String(x.wallet_id);
+    totals.set(key, (totals.get(key) || 0) + Number(x.quantity) * coin.price);
+  }
+  res.json(w.rows.map(r => ({
+    id: Number(r.id),
+    name: r.name,
+    created: r.created_at,
+    txs: Number(r.txs),
+    owners: r.owners || '',
+    total: totals.get(String(r.id)) || 0
+  })));
+}));
+
+app.post('/api/admin/wallet/reset-password', auth, admin, route(async (req, res) => {
+  const { id, password } = req.body || {};
+  if (!adminIdOk(id)) return fail(res, 'Invalid wallet ID');
+  if (!validPassword(password)) return fail(res, PASS_ERR);
+
+  const salt = crypto.randomBytes(16).toString('hex');
+  const r = await pool.query(
+    'UPDATE wallets SET password_hash=$1 WHERE id=$2 RETURNING id',
+    [`${salt}:${hashPw(password, salt)}`, String(id)]
+  );
+  if (!r.rows.length) return fail(res, 'Wallet not found', 404);
+
+  await pool.query('DELETE FROM wallet_sessions WHERE wallet_id=$1', [String(id)]);
+  res.json({ success: true });
+}));
+
+// Seed phrases are game-generated and only unlock virtual coins. They are kept for
+// wallets created from now on. Older wallets only have a hash, so their seed can
+// only be replaced with a new one (regenerate), not read.
+app.get('/api/admin/wallet/seed', auth, admin, route(async (req, res) => {
+  if (!adminIdOk(req.query.id)) return fail(res, 'Invalid wallet ID');
+  const r = await pool.query(
+    'SELECT name, seed_words FROM wallets WHERE id=$1', [String(req.query.id)]
+  );
+  if (!r.rows.length) return fail(res, 'Wallet not found', 404);
+  res.json({ name: r.rows[0].name, seed: r.rows[0].seed_words || null });
+}));
+
+app.post('/api/admin/wallet/regenerate-seed', auth, admin, route(async (req, res) => {
+  const { id } = req.body || {};
+  if (!adminIdOk(id)) return fail(res, 'Invalid wallet ID');
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const seed = genSeed();
+    try {
+      const r = await pool.query(
+        'UPDATE wallets SET seed_hash=$1, seed_words=$2 WHERE id=$3 RETURNING name',
+        [seedHash(seed), seed.join(' '), String(id)]
+      );
+      if (!r.rows.length) return fail(res, 'Wallet not found', 404);
+      return res.json({ name: r.rows[0].name, seed: seed.join(' ') });
+    } catch (err) {
+      if (err.code !== '23505') throw err;
+    }
+  }
+  fail(res, 'Could not generate a seed, try again', 500);
+}));
+
+app.post('/api/admin/wallet/delete', auth, admin, route(async (req, res) => {
+  const { id } = req.body || {};
+  if (!adminIdOk(id)) return fail(res, 'Invalid wallet ID');
+  const r = await pool.query('DELETE FROM wallets WHERE id=$1 RETURNING id', [String(id)]);
+  if (!r.rows.length) return fail(res, 'Wallet not found', 404);
+  res.json({ success: true });
+}));
+
+// ----- Royal Chat -----
+
+app.get('/api/admin/chat-users', auth, admin, route(async (req, res) => {
+  const r = await pool.query(`
+    SELECT c.id, c.username, c.created_at, c.last_seen,
+           (SELECT COUNT(*) FROM chat_messages m WHERE m.sender_id=c.id) AS msgs,
+           (SELECT string_agg(u.username, ', ' ORDER BY u.username)
+              FROM chat_links l JOIN users u ON u.id=l.user_id
+              WHERE l.chat_user_id=c.id) AS owners
+    FROM chat_users c ORDER BY c.id
+  `);
+  res.json(r.rows.map(c => ({
+    id: Number(c.id),
+    name: c.username,
+    created: c.created_at,
+    lastSeen: c.last_seen,
+    online: chatOnline(c.id),
+    messages: Number(c.msgs),
+    owners: c.owners || ''
+  })));
+}));
+
+app.post('/api/admin/chat/delete-user', auth, admin, route(async (req, res) => {
+  const { id } = req.body || {};
+  if (!adminIdOk(id)) return fail(res, 'Invalid chat account ID');
+  const r = await pool.query(
+    'DELETE FROM chat_users WHERE id=$1 RETURNING id', [String(id)]
+  );
+  if (!r.rows.length) return fail(res, 'Chat account not found', 404);
+
+  const set = chatClients.get(String(id));
+  if (set) {
+    for (const c of set) { try { c.end(); } catch (err) { } }
+    chatClients.delete(String(id));
+  }
+  res.json({ success: true });
+}));
+
+app.post('/api/admin/chat/clear-public', auth, admin, route(async (req, res) => {
+  const r = await pool.query('DELETE FROM chat_messages WHERE recipient_id IS NULL');
+  res.json({ success: true, removed: r.rowCount });
 }));
 
 // ---------- Errors and startup ----------

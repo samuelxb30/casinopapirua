@@ -133,6 +133,16 @@ td input{width:110px}
 .admin-actions .delete-btn{color:var(--r);border-color:#6d3038}
 .admin-user{font-weight:700}
 .admin-badge{color:var(--gold);font-size:12px}
+.admin-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin:0 0 20px}
+.admin-stat{background:#0d1220;border:1px solid var(--line);border-radius:12px;padding:12px}
+.admin-stat small{display:block;color:var(--mut);font-size:12px}
+.admin-stat strong{font-size:20px}
+.admin-box{margin:20px 0 0;padding:16px;background:#0d1220;border:1px solid var(--line);border-radius:12px}
+.admin-box h4{margin:0 0 10px}
+.admin-tag{font-size:11px;font-weight:800;padding:2px 7px;border-radius:99px;border:1px solid var(--line);margin-left:6px}
+.admin-tag.bad{color:var(--r);border-color:#6d3038}
+.admin-tag.ok{color:#7bc862;border-color:#355a2c}
+.admin-muted{color:var(--mut);font-size:12px}
 /* Live announcement ticker */
 .announcement-bar{display:flex;align-items:center;gap:12px;overflow:hidden;background:linear-gradient(90deg,#171d31,#22213a,#171d31);border-bottom:1px solid #4b4261;padding:10px 0;min-height:44px}
 .announcement-label{flex:0 0 auto;margin-left:20px;color:var(--gold);font-size:11px;font-weight:900;letter-spacing:1.5px}
@@ -530,6 +540,7 @@ td input{width:110px}
   <section id="admin" class="card hide">
     <h3 style="margin-top:0">🛠 Admin · Manage Accounts</h3>
     <p class="admin-info">Rename accounts, adjust virtual balances, or permanently delete non-admin accounts.</p>
+    <div class="admin-stats" id="adminStats"></div>
     <div class="announcement-admin">
       <h4 style="margin:0 0 10px">📢 Live announcement</h4>
       <label for="announcementInput">Ticker message (updates for everyone)</label>
@@ -545,6 +556,8 @@ td input{width:110px}
         <thead>
           <tr>
             <th>User</th>
+            <th>Member since</th>
+            <th>Last login</th>
             <th>Rename</th>
             <th>Balance</th>
             <th>Amount</th>
@@ -553,6 +566,39 @@ td input{width:110px}
         </thead>
         <tbody id="utable"></tbody>
       </table>
+    </div>
+    <p class="admin-muted">Passwords and wallet seed phrases are stored only as one-way hashes, so nobody (including admins) can read them. Use Reset password to set a new one.</p>
+
+    <div class="admin-box hide" id="adminDetail"></div>
+
+    <div class="admin-box">
+      <h4>🎁 Server-wide tools</h4>
+      <div class="announcement-edit-row" style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <input id="adminGiftAmount" type="number" min="1" step="1" placeholder="Coins for everyone" style="width:auto;flex:1;min-width:180px">
+        <button class="btn" onclick="adminGiftAll()">Give to all players</button>
+        <button class="btn ghost delete-btn" onclick="adminClearPublicChat()">Clear public chat</button>
+        <button class="btn ghost" onclick="loadAdminOverview()">Refresh stats</button>
+      </div>
+    </div>
+
+    <div class="admin-box">
+      <h4>👛 Exodus wallets <button class="btn ghost" style="margin-left:8px;padding:6px 10px" onclick="loadAdminWallets()">Load / refresh</button></h4>
+      <div class="admin-table-wrap">
+        <table>
+          <thead><tr><th>Wallet</th><th>Linked players</th><th>Value</th><th>Txs</th><th>Created</th><th>Actions</th></tr></thead>
+          <tbody id="adminWallets"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="admin-box">
+      <h4>💬 Royal Chat accounts <button class="btn ghost" style="margin-left:8px;padding:6px 10px" onclick="loadAdminChats()">Load / refresh</button></h4>
+      <div class="admin-table-wrap">
+        <table>
+          <thead><tr><th>Chat user</th><th>Linked players</th><th>Messages</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+          <tbody id="adminChats"></tbody>
+        </table>
+      </div>
     </div>
   </section>
 
@@ -761,7 +807,7 @@ function show(t){
   document.querySelectorAll('nav button').forEach(b=>
     b.classList.toggle('on',b.dataset.t===t)
   );
-  if(t==='admin'){loadUsers();loadAnnouncement(true);}
+  if(t==='admin'){loadUsers();loadAdminOverview();loadAnnouncement(true);}
   if(t==='shop')loadShop();
   if(t==='broker')loadBroker();
 }
@@ -2266,6 +2312,18 @@ async function loadUsers(){
       nameCell.appendChild(badge);
     }
 
+    if(user.banned){
+      const tag=document.createElement('span');
+      tag.className='admin-tag bad';
+      tag.textContent='BANNED';
+      nameCell.appendChild(tag);
+    }
+
+    const sinceCell=document.createElement('td');
+    sinceCell.textContent=user.created?new Date(user.created).toLocaleDateString():'?';
+    const loginCell=document.createElement('td');
+    loginCell.textContent=user.last_login?new Date(user.last_login).toLocaleString():'never';
+
     // Rename input
     const renameCell=document.createElement('td');
     const renameInput=document.createElement('input');
@@ -2314,7 +2372,12 @@ async function loadUsers(){
     setButton.textContent='Set';
     setButton.onclick=()=>adj(user.id,'set');
 
-    actions.append(renameButton,addButton,setButton);
+    const detailButton=document.createElement('button');
+    detailButton.className='btn ghost';
+    detailButton.textContent='Details';
+    detailButton.onclick=()=>adminOpenUser(user.id);
+
+    actions.append(detailButton,renameButton,addButton,setButton);
 
     // Never offer deletion of administrator accounts in the UI.
     if(!user.is_admin){
@@ -2326,7 +2389,7 @@ async function loadUsers(){
     }
 
     actionsCell.appendChild(actions);
-    tr.append(nameCell,renameCell,balanceCell,amountCell,actionsCell);
+    tr.append(nameCell,sinceCell,loginCell,renameCell,balanceCell,amountCell,actionsCell);
     tbody.appendChild(tr);
   }
 }
@@ -2405,6 +2468,181 @@ async function adj(id,mode){
     me=current;
     setBal(current.balance);
     $('#who').textContent=current.username+(current.isAdmin?' · admin':'');
+  }
+}
+
+// ---- Extra admin tools ----
+async function loadAdminOverview(){
+  const d=await api('admin/overview');
+  if(!d)return;
+  const box=$('#adminStats');
+  box.replaceChildren();
+  const stats=[
+    ['Players',fmt(d.users)],['Admins',fmt(d.admins)],['Banned',fmt(d.banned)],
+    ['Active (24h)',fmt(d.active24h)],['Coins in circulation',fmt(d.totalBalance)],
+    ['Games running',fmt(d.activeGames)],['Trades',fmt(d.trades)],['Shop items owned',fmt(d.shopItems)],
+    ['Wallets',fmt(d.wallets)],['Chat accounts',fmt(d.chatUsers)],['Chat online',fmt(d.chatOnline)],
+    ['Chat messages',fmt(d.chatMessages)],['Broker sales',fmt(d.brokerSales)]
+  ];
+  for(const [k,v] of stats){
+    const c=brkEl('div','admin-stat');
+    c.append(brkEl('small','',k),brkEl('strong','',v));
+    box.append(c);
+  }
+}
+
+async function adminOpenUser(id){
+  const d=await api('admin/user-detail?id='+encodeURIComponent(id));
+  if(!d)return;
+  const box=$('#adminDetail');
+  box.replaceChildren();
+  box.classList.remove('hide');
+  const u=d.user;
+  const head=brkEl('h4','','🔍 '+u.username);
+  if(u.is_admin)head.append(brkEl('span','admin-tag ok','ADMIN'));
+  if(u.banned)head.append(brkEl('span','admin-tag bad','BANNED'));
+  box.append(head);
+
+  brkRows(box,[
+    ['Account ID',String(u.id)],
+    ['Member since',brkDate(u.created)],
+    ['Last login',u.last_login?brkDate(u.last_login):'never'],
+    ['Active sessions',fmt(d.sessions)],
+    ['Balance',fmt(d.casino.balance)+' coins (rank #'+d.casino.rank+' of '+d.casino.players+')'],
+    ['In a game',d.casino.activeGame||'No'],
+    ['Portfolio value','$'+brkNum(d.trading.totalValue)+' · '+fmt(d.trading.trades)+' trades'],
+    ['Luxury items',fmt(d.luxury.count)+' · '+fmt(d.luxury.totalPaid)+' coins spent'],
+    ['Reports bought / sold about them',fmt(d.reportsBought)+' / '+fmt(d.reportsAbout)]
+  ]);
+
+  const chats=d.chat.chats||[];
+  brkRows(box,[['Chat accounts',chats.length?chats.map(c=>'@'+c.username+(c.online?' 🟢':'')).join(', '):'none linked']]);
+  const wallets=d.wallet.wallets||[];
+  brkRows(box,[['Exodus wallets',wallets.length?wallets.map(w=>w.walletName+' ($'+brkNum(w.total)+')').join(', '):'none linked']]);
+
+  const acts=brkEl('div','admin-actions');
+  acts.style.marginTop='12px';
+  const add=(label,fn,danger)=>{
+    const b=brkEl('button','btn ghost'+(danger?' delete-btn':''),label);
+    b.onclick=fn;
+    acts.append(b);
+  };
+  add('🔑 Reset password',()=>adminResetPassword(u.id,u.username));
+  if(!u.is_admin){
+    add('🚪 Log out everywhere',()=>adminPost('admin/logout-user',{id:u.id},'Logged out',u.id));
+    add(u.banned?'✅ Unban':'⛔ Ban',()=>adminBan(u.id,u.username,!u.banned),!u.banned);
+  }
+  if(d.casino.activeGame){
+    add('♻️ End game + refund bet',()=>adminPost('admin/clear-game',{id:u.id,refund:true},'Game ended, bet refunded',u.id));
+    add('🧹 End game (no refund)',()=>adminPost('admin/clear-game',{id:u.id,refund:false},'Game ended',u.id),true);
+  }
+  if(!me||String(me.id)!==String(u.id)){
+    add(u.is_admin?'⬇️ Remove admin':'⭐ Make admin',()=>adminPost('admin/set-admin',{id:u.id,isAdmin:!u.is_admin},'Admin rights updated',u.id));
+  }
+  box.append(acts);
+  box.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+async function adminPost(path,body,okMsg,reopenId){
+  const r=await api(path,body);
+  if(!r)return;
+  toast(okMsg);
+  await loadUsers();
+  loadAdminOverview();
+  if(reopenId)adminOpenUser(reopenId);
+}
+
+async function adminResetPassword(id,username){
+  const pw=prompt('New password for "'+username+'" (1-200 characters). Their sessions will be logged out.');
+  if(pw===null)return;
+  if(!pw||pw.length>200){toast('Password must be 1-200 characters');return;}
+  const r=await api('admin/reset-password',{id,password:pw});
+  if(r)toast('Password reset for '+username);
+}
+
+async function adminBan(id,username,ban){
+  if(!confirm((ban?'Ban "':'Unban "')+username+'"?'))return;
+  adminPost('admin/ban',{id,banned:ban},ban?'Player banned':'Player unbanned',id);
+}
+
+async function adminGiftAll(){
+  const amount=Number($('#adminGiftAmount').value);
+  if(!Number.isSafeInteger(amount)||amount<1){toast('Enter a whole number of coins');return;}
+  if(!confirm('Give '+fmt(amount)+' coins to every non-banned player?'))return;
+  const r=await api('admin/balance-all',{amount});
+  if(!r)return;
+  toast('Gave '+fmt(amount)+' coins to '+fmt(r.users)+' players');
+  loadUsers();loadAdminOverview();
+  const cur=await api('me');
+  if(cur){me=cur;setBal(cur.balance);}
+}
+
+async function adminClearPublicChat(){
+  if(!confirm('Delete every message in the public chat? This cannot be undone.'))return;
+  const r=await api('admin/chat/clear-public',{});
+  if(r)toast('Removed '+fmt(r.removed)+' public messages');
+  loadAdminOverview();
+}
+
+async function loadAdminWallets(){
+  const list=await api('admin/wallets');
+  if(!list)return;
+  const body=$('#adminWallets');
+  body.replaceChildren();
+  if(!list.length){const tr=document.createElement('tr');const td=brkEl('td','admin-muted','No wallets yet');td.colSpan=6;tr.append(td);body.append(tr);return;}
+  for(const w of list){
+    const tr=document.createElement('tr');
+    const actions=brkEl('div','admin-actions');
+    const reset=brkEl('button','btn ghost','Reset password');
+    reset.onclick=async()=>{
+      const pw=prompt('New password for wallet "'+w.name+'" (1-200 characters):');
+      if(pw===null)return;
+      if(!pw||pw.length>200){toast('Password must be 1-200 characters');return;}
+      const r=await api('admin/wallet/reset-password',{id:w.id,password:pw});
+      if(r)toast('Wallet password reset');
+    };
+    const del=brkEl('button','btn ghost delete-btn','Delete');
+    del.onclick=async()=>{
+      if(!confirm('Permanently delete wallet "'+w.name+'" and all its assets?'))return;
+      const r=await api('admin/wallet/delete',{id:w.id});
+      if(r){toast('Wallet deleted');loadAdminWallets();loadAdminOverview();}
+    };
+    const seedBtn=brkEl('button','btn ghost','Seed phrase');
+    seedBtn.onclick=async()=>{
+      const r=await api('admin/wallet/seed?id='+encodeURIComponent(w.id));
+      if(!r)return;
+      if(r.seed){alert('Seed phrase for "'+w.name+'":\n\n'+r.seed);return;}
+      if(!confirm('This wallet was created before seed phrases were saved, so its seed cannot be read. Generate a NEW seed phrase for it? The old one will stop working.'))return;
+      const n=await api('admin/wallet/regenerate-seed',{id:w.id});
+      if(n)alert('New seed phrase for "'+w.name+'":\n\n'+n.seed);
+    };
+    actions.append(seedBtn,reset,del);
+    const cells=[w.name,w.owners||'unlinked','$'+brkNum(w.total),fmt(w.txs),new Date(w.created).toLocaleDateString()];
+    for(const c of cells)tr.append(brkEl('td','',c));
+    const ac=document.createElement('td');ac.append(actions);tr.append(ac);
+    body.append(tr);
+  }
+}
+
+async function loadAdminChats(){
+  const list=await api('admin/chat-users');
+  if(!list)return;
+  const body=$('#adminChats');
+  body.replaceChildren();
+  if(!list.length){const tr=document.createElement('tr');const td=brkEl('td','admin-muted','No chat accounts yet');td.colSpan=6;tr.append(td);body.append(tr);return;}
+  for(const c of list){
+    const tr=document.createElement('tr');
+    const status=c.online?'🟢 online':'⚪ '+new Date(c.lastSeen).toLocaleString();
+    const cells=[c.name,c.owners||'unlinked',fmt(c.messages),status,new Date(c.created).toLocaleDateString()];
+    for(const x of cells)tr.append(brkEl('td','',x));
+    const del=brkEl('button','btn ghost delete-btn','Delete');
+    del.onclick=async()=>{
+      if(!confirm('Delete chat account "'+c.name+'" and all its messages?'))return;
+      const r=await api('admin/chat/delete-user',{id:c.id});
+      if(r){toast('Chat account deleted');loadAdminChats();loadAdminOverview();}
+    };
+    const ac=document.createElement('td');ac.append(del);tr.append(ac);
+    body.append(tr);
   }
 }
 
